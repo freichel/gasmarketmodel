@@ -15,7 +15,7 @@ import openpyxl
 print("Finding scenarios...")
 scenario_file_list = []
 for file in os.listdir(SCENARIO_FOLDER):
-    if file.endswith(".xlsm"):
+    if file.endswith(".xlsm") and not file.startswith("~"):
         scenario_file_list.append(SCENARIO_FOLDER / file)
 print("...scenarios loaded.")
 print("")
@@ -47,10 +47,17 @@ for scenario_file in scenario_file_list:
     # Region imports
     # Region defs
     regions_df = ei.import_excel_generic_df(scenario_file, "Regions > Index", 4, 1)
+    regions_df["Master"].fillna(regions_df["Region"], inplace = True)
     # Region demand data
-    regions_demand_df = ei.import_excel_generic_df(scenario_file, "Regions > Demand", 4, 1)
+    regions_demand_df = ei.import_excel_generic_df(scenario_file, "Regions > Demand", 4, 1).merge(
+        regions_df[["Region", "Master"]],
+        on = "Region"
+    ).groupby("Master").sum().reset_index().rename(columns = {"Master" : "Region"}).set_index("Region")
     # Region production data
-    regions_production_df = ei.import_excel_generic_df(scenario_file, "Regions > Production", 4, 1)
+    regions_production_df = ei.import_excel_generic_df(scenario_file, "Regions > Production", 4, 1).merge(
+        regions_df[["Region", "Master"]],
+        on = "Region"
+    ).groupby("Master").sum().reset_index().rename(columns = {"Master" : "Region"}).set_index("Region")
     
     # Piped importers
     # Piped importers defs
@@ -58,7 +65,12 @@ for scenario_file in scenario_file_list:
     # Piped importers production
     piped_importers_production_df = ei.import_excel_generic_df(scenario_file, "Piped Importers > Production", 4, 1)
     # Piped importers connections
-    piped_importers_connections_df = ei.import_excel_generic_df(scenario_file, "Piped Importers > Connections", 4, 8)
+    piped_importers_connections_df = ei.import_excel_generic_df(scenario_file, "Piped Importers > Connections", 4, 8).merge(
+        regions_df[["Region", "Master"]],
+        on = "Region"
+    )
+    piped_importers_connections_df["Region"] = piped_importers_connections_df["Master"]
+    piped_importers_connections_df.drop(columns = ["Master"], inplace = True)
     # Piped importers connections data
     piped_importers_connections_data_df = ei.import_excel_connections_data_df(scenario_file, "Piped Importers > Data", 4, [0,1], piped_importers_connections_df)
     
@@ -66,13 +78,31 @@ for scenario_file in scenario_file_list:
     # LNG importers defs
     lng_importers_df = ei.import_excel_generic_df(scenario_file, "LNG Importers > Index", 4, 1)
     # LNG importers connections
-    lng_importers_connections_df = ei.import_excel_generic_df(scenario_file, "LNG Importers > Connections", 4, 8)
+    lng_importers_connections_df = ei.import_excel_generic_df(scenario_file, "LNG Importers > Connections", 4, 8).merge(
+        regions_df[["Region", "Master"]],
+        on = "Region"
+    )
+    lng_importers_connections_df["Region"] = lng_importers_connections_df["Master"]
+    lng_importers_connections_df.drop(columns = ["Master"], inplace = True)
     # LNG importers connections data
     lng_importers_connections_data_df = ei.import_excel_connections_data_df(scenario_file, "LNG Importers > Data", 4, [0,1])
     
     # Region connections
     # Region connections defs
-    connections_df = ei.import_excel_generic_df(scenario_file, "Connections > Index", 4, 8)
+    connections_df = ei.import_excel_generic_df(scenario_file, "Connections > Index", 4, 8).merge(
+        regions_df[["Region", "Master"]],
+        left_on = "Origin",
+        right_on = "Region",
+        suffixes = ("", "_o")
+    ).merge(
+        regions_df[["Region", "Master"]],
+        left_on = "Destination",
+        right_on = "Region",
+        suffixes = ("", "_d")
+    )
+    connections_df["Origin"] = connections_df["Master"]
+    connections_df["Destination"] = connections_df["Master_d"]
+    connections_df.drop(columns = ["Master", "Master_d", "Region", "Region_d"], inplace = True)
     # Region connections data
     connections_data_df = ei.import_excel_connections_data_df(scenario_file, "Connections > Data", 4, [0,1])
     
@@ -81,7 +111,12 @@ for scenario_file in scenario_file_list:
     # Storage defs
     storage_df = ei.import_excel_generic_df(scenario_file, "Storage > Index", 4, 1)
     # Storage connections
-    storage_connections_df = ei.import_excel_generic_df(scenario_file, "Storage > Connections", 4, 8)
+    storage_connections_df = ei.import_excel_generic_df(scenario_file, "Storage > Connections", 4, 8).merge(
+        regions_df[["Region", "Master"]],
+        on = "Region"
+    )
+    storage_connections_df["Region"] = storage_connections_df["Master"]
+    storage_connections_df.drop(columns = ["Master"], inplace = True)
     # Storage connections data
     storage_connections_data_df = ei.import_excel_connections_data_df(scenario_file, "Storage > Data", 4, [0,1])
     
@@ -95,8 +130,8 @@ for scenario_file in scenario_file_list:
     '''
     Define output dataframes
     '''
-    output_demand_df = regions_demand_df.drop(columns = ["Source/Comments", "DemandID"]).set_index("Region")
-    output_production_df = regions_production_df.drop(columns = ["Source/Comments", "ProductionID"]).set_index("Region")
+    output_demand_df = regions_demand_df.drop(columns = ["Source/Comments", "DemandID"], errors = "ignore")
+    output_production_df = regions_production_df.drop(columns = ["Source/Comments", "ProductionID"], errors = "ignore")
     output_piped_importers_df = pd.DataFrame()
     output_lng_importers_df = pd.DataFrame()
     output_connections_df = pd.DataFrame()
@@ -201,22 +236,22 @@ for scenario_file in scenario_file_list:
         regions_supply_dict = {}
         # Dictionary country: demand
         regions_demand_dict = {}
-        for region_index, region in regions_df.iterrows():
+        for region_index, region in regions_df[regions_df["Region"] == regions_df["Master"]].set_index("Region").iterrows():
             # Demand
             region_demand = regions_demand_df.loc[region_index][cycle]
-            regions_demand_dict[region["Region"]] = region_demand * cycle_days
+            regions_demand_dict[region_index] = region_demand * cycle_days
             
             # Production
             region_production = regions_production_df.loc[region_index][cycle]
-            regions_supply_dict[region["Region"]] = [[1, region_production * cycle_days, 0, 0, 0, f"Production {region['Region']}", ""]]
+            regions_supply_dict[region_index] = [[1, region_production * cycle_days, 0, 0, 0, f"Production {region_index}", ""]]
             
             # Piped imports
-            piped_importer_list = piped_importers_connections_df[piped_importers_connections_df["Region Index"] == region_index]["Name"].to_dict()
+            piped_importer_list = piped_importers_connections_df[piped_importers_connections_df["Region"] == region_index]["Name"].to_dict()
             for piped_importer_id, piped_importer in piped_importer_list.items():
                 # Min flow
-                regions_supply_dict[region["Region"]].append([1, piped_importers_connections_data_df.loc[piped_importer, "Capacity - Min"][cycle] * cycle_days, 0, 0, 0, f"{piped_importer} - Min", ""])
+                regions_supply_dict[region_index].append([1, piped_importers_connections_data_df.loc[piped_importer, "Capacity - Min"][cycle] * cycle_days, 0, 0, 0, f"{piped_importer} - Min", ""])
                 # Variable flow
-                regions_supply_dict[region["Region"]].append(
+                regions_supply_dict[region_index].append(
                     [
                         1,
                         piped_importers_connections_dict[piped_importer_id],
@@ -229,12 +264,12 @@ for scenario_file in scenario_file_list:
                 )
             
             # LNG imports
-            lng_importer_list = lng_importers_connections_df[lng_importers_connections_df["Region Index"] == region_index]["Name"].to_dict()
+            lng_importer_list = lng_importers_connections_df[lng_importers_connections_df["Region"] == region_index]["Name"].to_dict()
             for lng_importer_id, lng_importer in lng_importer_list.items():
                 # Min flow
-                regions_supply_dict[region["Region"]].append([1, lng_importers_connections_data_df.loc[lng_importer, "Capacity - Min"][cycle] * cycle_days, 0, 0, 0, f"{lng_importer} - Min", ""])
+                regions_supply_dict[region_index].append([1, lng_importers_connections_data_df.loc[lng_importer, "Capacity - Min"][cycle] * cycle_days, 0, 0, 0, f"{lng_importer} - Min", ""])
                 # Variable flow
-                regions_supply_dict[region["Region"]].append(
+                regions_supply_dict[region_index].append(
                     [
                         1,
                         lng_importers_connections_dict[lng_importer_id],
@@ -247,12 +282,12 @@ for scenario_file in scenario_file_list:
                 )
                 
             # Region connections (imports)
-            import_list = connections_df[connections_df["Destination Index"] == region_index]["Name"].to_dict()
+            import_list = connections_df[connections_df["Destination"] == region_index]["Name"].to_dict()
             for importer_id, importer in import_list.items():
                 # Min flow
-                regions_supply_dict[region["Region"]].append([1, connections_data_df.loc[importer, "Capacity - Min"][cycle] * cycle_days, 0, 0, 0, f"{importer} - Min", ""])
+                regions_supply_dict[region_index].append([1, connections_data_df.loc[importer, "Capacity - Min"][cycle] * cycle_days, 0, 0, 0, f"{importer} - Min", ""])
                 # Variable flow
-                regions_supply_dict[region["Region"]].append(
+                regions_supply_dict[region_index].append(
                     [
                         1,
                         connections_dict[importer_id],
@@ -265,17 +300,17 @@ for scenario_file in scenario_file_list:
                 )
             
             # Region connections (exports)
-            export_list = connections_df[connections_df["Origin Index"] == region_index]["Name"].to_dict()
+            export_list = connections_df[connections_df["Origin"] == region_index]["Name"].to_dict()
             for exporter_id, exporter in export_list.items():
                 # Min flow
-                regions_supply_dict[region["Region"]].append([-1, connections_data_df.loc[exporter, "Capacity - Min"][cycle] * cycle_days, 0, 0, 0, f"{exporter} - Min", ""])
+                regions_supply_dict[region_index].append([-1, connections_data_df.loc[exporter, "Capacity - Min"][cycle] * cycle_days, 0, 0, 0, f"{exporter} - Min", ""])
                 # Variable flow
-                regions_supply_dict[region["Region"]].append([-1, connections_dict[exporter_id], 0, -connections_data_df.loc[exporter, "Tariff - variable"][cycle] * unit_conversions_df.loc["mcm"]["MWh"], 0, exporter, connections_df[connections_df["Name"] == exporter]["Destination"].item()])
+                regions_supply_dict[region_index].append([-1, connections_dict[exporter_id], 0, -connections_data_df.loc[exporter, "Tariff - variable"][cycle] * unit_conversions_df.loc["mcm"]["MWh"], 0, exporter, connections_df[connections_df["Name"] == exporter]["Destination"].item()])
             
             '''
             #TODO needs rework
             # Storage
-            storage_list = storage_connections_df[storage_connections_df["Region Index"] == region_index]["Name"].to_dict()
+            storage_list = storage_connections_df[storage_connections_df["Region"] == region_index]["Name"].to_dict()
             for storage_id, storage in storage_list.items():
                 # Min Flow
                 print(storage_connections_data_df.loc[storage, "Capacity - Min"][cycle])
@@ -287,7 +322,7 @@ for scenario_file in scenario_file_list:
         Model
         '''
         # Initialise model
-        cost_total = pulp.LpProblem('Cost', pulp.LpMinimize)
+        cost_total = pulp.LpProblem("Cost", pulp.LpMinimize)
         
         # Volume balancing
         # Supply/demand matching
@@ -341,12 +376,25 @@ for scenario_file in scenario_file_list:
         #TODO add fixed costs
         regions_cost_dict = {}
         for region_key, region_data in regions_supply_dict.items():
+            # Define binary flags for fixed tariffs
+            region_binaries = []
+            for row in region_data:
+                # Only positive flows
+                if row[0] == 1:
+                    # Only variable flows
+                    if isinstance(row[1], pulp.pulp.LpVariable):
+                        region_binaries.append(pulp.LpVariable(f"Fixed_Cost_Flag_{row[5]}", cat = "Binary"))
+                        cost_total += (region_binaries[-1] >= row[1] * 0.001)
+                        cost_total += (region_binaries[-1] <= row[1] * 1e10)
+                    else:
+                        region_binaries.append(0)
             # Multiply attracted supplies (1, not -1) by their respective tariffs
             # 0 is factor
             # 1 is volume
+            # 2 is fixed tariff
             # 3 is variable tariff
             # 4 is lng switch
-            region_cost = pulp.lpSum([row[0] * row[1] * (max(row[3], 0) + row[4] * lng_price) for row in region_data if row[0] == 1])
+            region_cost = pulp.lpSum([row[0] * row[1] * (max(row[3], 0) + row[4] * lng_price) + region_binaries[row_index] * row[2] for row_index, row in enumerate(region_data) if row[0] == 1])
             # Append to dictionary
             regions_cost_dict[region_key] = region_cost
         # Add up total cost and add as objective    
@@ -420,13 +468,16 @@ for scenario_file in scenario_file_list:
                 # Iterate over remaining regions
                 for region_key, region_prices in regions_sources_dict.items():
                     # Find first instance of an unresolved price
-                    for region_price_index, region_price in enumerate(region_prices):
-                        if isinstance(region_price, list):
-                            # Delete it
-                            del regions_sources_dict[region_key][region_price_index]
-                            break
-                        else:
-                            continue
+                    if len(region_prices) > 1:
+                        for region_price_index, region_price in enumerate(region_prices):
+                            if isinstance(region_price, list):
+                                # Delete it
+                                del regions_sources_dict[region_key][region_price_index]
+                                break
+                            else:
+                                continue
+                    else:
+                        continue
                     break
         
         '''
@@ -540,6 +591,7 @@ for scenario_file in scenario_file_list:
     # Dictionary with all output dataframes.
     # label: [dataframe, total_row_switch, row offset]
     output_dict = {
+        "Mapping": [regions_df[["Master", "Region"]].copy().set_index("Master"), False, - 4],
         "Demand": [output_demand_df.sort_index(), True, 0],
         "Production": [output_production_df.sort_index(), True, 0],
         "Price": [output_prices_df.sort_index(), False, 0],
