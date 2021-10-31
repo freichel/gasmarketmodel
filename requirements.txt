@@ -8,7 +8,8 @@ numpy
 pandas
 pulp
 
-# API
+# API/Outputs
 openpyxl
 geopandas
-matplotlip
+matplotlib
+rtree
