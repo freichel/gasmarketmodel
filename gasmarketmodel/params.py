@@ -7,17 +7,21 @@ from pathlib import Path
 import geopandas as gpd
 from shapely.geometry import Polygon
 import pandas as pd
+import matplotlib.colors
 
 # Locations
 PROJECT_DIR = Path(os.path.abspath(__file__)).parent.parent.absolute()
 PROJECT_NAME = PROJECT_DIR / "gasmarketmodel"
 DATA_FOLDER = PROJECT_NAME / "data"
 SCENARIO_FOLDER = DATA_FOLDER / "scenarios"
+PARAMS_FOLDER = DATA_FOLDER / "params"
 OUTPUT_FOLDER = DATA_FOLDER / "outputs"
-OUTPUT_TEMPLATE_FILE = OUTPUT_FOLDER / "template.xlsx"
+TEMP_FOLDER = DATA_FOLDER / "temp"
+OUTPUT_TEMPLATE_FILE = PARAMS_FOLDER / "template.xlsx"
+COUNTRY_SHAPE_FILE = PARAMS_FOLDER / "country_shapes.zip"
 
 # Country names
-country_names = {
+country_translations = {
     "Deutschland" : "Germany",
     "Niederlande" : "Netherlands",
     "Frankreich" : "France",
@@ -61,20 +65,53 @@ country_names = {
     "Montenegro" : "Montenegro",
     "Kosovo" : "Kosovo",
     "Türkei" : "Turkey",
-    "Nordmazedonien" : "North Macedonia"    
+    "Nordmazedonien" : "North Macedonia",
+    "Norwegen" : "Norway"    
+}
+
+# Piped importer countries
+piped_importer_countries = [
+    "Norwegen",
+    "Algerien",
+    "Libyen",
+    "Russland"
+]
+
+# Output metrics
+# Label : [label_metric, colormap_metric, label_round_digits]
+output_metrics = {
+    "Demand" : ["Demand", "Demand", 0],
+    "Price" : ["Price", "Price", 2],
+}
+
+# Label/sheet name : total_row_switch, row offset, index columns
+output_dict = {
+    "Demand" : [True, 0, 0],
+    "Production" : [True, 0, 0],
+    "Price" : [False, 0, 0],
+    "Storage Volumes": [True, 0, 0],
+    "Storage Levels": [True, 1, 0],
+    "LNG" : [True, 8, [0, 1, 2]],
+    "Piped Imports" : [True, 12, [0, 1, 2]],
+    "Piped Exports" : [True, 12, [0, 1, 2]],
+    "Connections" : [False, 12, [0, 1, 2]],
+    "Supply Mix" : [False, 12, [0, 1]]
 }
 
 # Seasons
 seasons_dict = {
-    #"Winter" : ["Okt-21", "Nov-21", "Dez-21", "Jan-22", "Feb-22", "Mrz-22"],
-    #"Sommer" : ["Apr-22", "Mai-22", "Jun-22", "Jul-22", "Aug-22", "Sep-22"],
-    "Test" : ["Aug-21", "Sep-21"]
+    "Winter" : ["Okt-21", "Nov-21", "Dez-21", "Jan-22", "Feb-22", "Mrz-22"],
+    "Sommer" : ["Apr-22", "Mai-22", "Jun-22", "Jul-22", "Aug-22", "Sep-22"]
 }
 seasons_df = pd.melt(pd.DataFrame.from_dict(seasons_dict), var_name = "season", value_name = "cycle").set_index("season")
 
+# Individual countries
+zoom_list = ["Deutschland"]
+zoom_padding = 1
+
 # Europe frame
 europe_x = [-12, 42]
-europe_y = [30, 71]
+europe_y = [30, 74.5]
 europe_frame = gpd.GeoDataFrame(
     geometry = gpd.GeoSeries(
         Polygon([
@@ -102,7 +139,22 @@ color_dict = {
     11 : (60/255, 60/255, 160/255),
     12 : (112/255, 48/255, 160/255)
 }
-linewidth_main = 1
-linewidth_sub = 0.5
-edgecolor_main = "black"
-edgecolor_sub = "grey"
+resolution_level = 1
+formatting_dict = {
+    "linewidth_main" : 1 * resolution_level,
+    "linewidth_sub" : 0.5 * resolution_level,
+    "linewidth_importer" : 1 * resolution_level,
+    "edgecolor_main" : "black",
+    "edgecolor_sub" : "grey",
+    "edgecolor_importer" : "grey",
+    "facecolor_main" : color_dict[1],
+    "facecolor_sub" : (0.95, 0.95, 0.95),
+    "facecolor_importer" : color_dict[6],
+    "label_fontsize" : 12 * resolution_level,
+    "cmap_main" : matplotlib.colors.LinearSegmentedColormap.from_list("", [color_dict[2],color_dict[1],color_dict[3]]),
+    "connection_arrow_col" : color_dict[7],
+    "lng_connection_arrow_col" : color_dict[12],
+    "piped_import_label_col" : color_dict[6],
+    "piped_import_base_linewidth" : 10 * resolution_level
+}
+
