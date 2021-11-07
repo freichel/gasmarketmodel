@@ -61,12 +61,13 @@ country_translations = {
     "Weißrussland" : "Belarus",
     "Moldawien" : "Moldova",
     "Albanien" : "Albania",
-    "Serbien" : "Serbia",
+    "Serbien" : "Republic of Serbia",
     "Montenegro" : "Montenegro",
     "Kosovo" : "Kosovo",
     "Türkei" : "Turkey",
     "Nordmazedonien" : "North Macedonia",
-    "Norwegen" : "Norway"    
+    "Norwegen" : "Norway",
+    "Bosnien" : "Bosnia and Herzegovina"
 }
 
 # Piped importer countries
@@ -80,8 +81,25 @@ piped_importer_countries = [
 # Output metrics
 # Label : [label_metric, colormap_metric, label_round_digits]
 output_metrics = {
-    "Demand" : ["Demand", "Demand", 0],
-    "Price" : ["Price", "Price", 2],
+    "Alles" : {
+        "label_metric" : "Demand",
+        "label_digits" : 1,
+        "colormap_metric" : "Demand",
+        "show_colorscale" : True,
+        "piped_imports" : 0,
+        "piped_imports_digits" : 0,
+        "piped_exports" : 0,
+        "piped_exports_digits" : 0,
+        "lng_imports" : -1,
+        "lng_imports_digits" : 0,
+        "aggregate_transit" : True,
+        "transits" : -1,
+        "transits_digits" : 0
+    },
+    "Preis" : {
+        "colormap_metric" : "Price",
+        "show_colorscale" : True
+    }
 }
 
 # Label/sheet name : total_row_switch, row offset, index columns
@@ -106,7 +124,7 @@ seasons_dict = {
 seasons_df = pd.melt(pd.DataFrame.from_dict(seasons_dict), var_name = "season", value_name = "cycle").set_index("season")
 
 # Individual countries
-zoom_list = ["Deutschland"]
+zoom_list = ["Deutschland", "Italien", "Schweiz"]
 zoom_padding = 1
 
 # Europe frame
@@ -122,7 +140,7 @@ europe_frame = gpd.GeoDataFrame(
         ]),
         index = ["Europe"]
     )
-)
+).set_crs(epsg = 4326)
 
 # Colors and formatting
 color_dict = {
@@ -139,7 +157,7 @@ color_dict = {
     11 : (60/255, 60/255, 160/255),
     12 : (112/255, 48/255, 160/255)
 }
-resolution_level = 1
+resolution_level = 5
 formatting_dict = {
     "linewidth_main" : 1 * resolution_level,
     "linewidth_sub" : 0.5 * resolution_level,
@@ -151,9 +169,13 @@ formatting_dict = {
     "facecolor_sub" : (0.95, 0.95, 0.95),
     "facecolor_importer" : color_dict[6],
     "label_fontsize" : 12 * resolution_level,
+    "connection_label_fontsize" : 10 * resolution_level,
+    "lng_label_fontsize" : 10 * resolution_level,
     "cmap_main" : matplotlib.colors.LinearSegmentedColormap.from_list("", [color_dict[2],color_dict[1],color_dict[3]]),
     "connection_arrow_col" : color_dict[7],
+    "connection_arrow_alpha" : 1,
     "lng_connection_arrow_col" : color_dict[12],
+    "lng_connection_arrow_alpha" : 1,
     "piped_import_label_col" : color_dict[6],
     "piped_import_base_linewidth" : 10 * resolution_level
 }

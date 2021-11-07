@@ -645,7 +645,7 @@ for scenario_file in scenario_file_list:
         if cycle_index == 20:
             break
         
-    
+    print("  Calculating seasons...")
     # Seasons
     for season in set(seasons_df.index.values):
         season_days = 0
@@ -701,6 +701,7 @@ for scenario_file in scenario_file_list:
         output_prices_df[season] = (season_prices / season_demand).fillna(season_prices / season_days)
         # Supply mix
         output_supply_mix_df[season] = season_supply_mix / season_days
+    print(" ...seasons calculated")
             
     print("  Writing data...")
     '''
