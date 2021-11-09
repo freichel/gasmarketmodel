@@ -638,12 +638,7 @@ for scenario_file in scenario_file_list:
             output_supply_mix_df.loc[(region_key, "Transit Imports"), cycle] = output_connections_df[output_connections_df["Destination"] == region_key][cycle].sum()
         
         print(f"   ...cycle {cycle} ({cycle_index + 1} of {len(cycles_days_dict)}) completed")
-        
         cycle_index += 1
-        
-        #TODO temporary
-        if cycle_index == 20:
-            break
         
     print("  Calculating seasons...")
     # Seasons
@@ -752,7 +747,7 @@ for scenario_file in scenario_file_list:
                     
     # Scenario name
     ws = wb["Scenario"]
-    ws.cell(1, 2, value = scenario)
+    ws.cell(1, 3, value = scenario)
 
     # Save
     wb.save(output_file)     

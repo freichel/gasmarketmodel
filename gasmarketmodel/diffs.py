@@ -71,7 +71,7 @@ for output_key, output_data in diff_df_dict.items():
                 
 # Scenario name
 ws = wb["Scenario"]
-ws.cell(1, 2, value = f"Delta {alt_scenario}-{base_scenario}")
+ws.cell(1, 3, value = f"Delta {alt_scenario}-{base_scenario}")
 
 # Save
 wb.save(output_file)     

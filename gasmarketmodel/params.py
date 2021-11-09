@@ -85,6 +85,7 @@ output_metrics = {
         "label_metric" : "Demand",
         "label_digits" : 1,
         "colormap_metric" : "Demand",
+        "colormp_digits" : 0,
         "show_colorscale" : True,
         "piped_imports" : 0,
         "piped_imports_digits" : 0,
@@ -98,6 +99,7 @@ output_metrics = {
     },
     "Preis" : {
         "colormap_metric" : "Price",
+        "colormap_digits" : 1,
         "show_colorscale" : True
     }
 }
@@ -157,7 +159,7 @@ color_dict = {
     11 : (60/255, 60/255, 160/255),
     12 : (112/255, 48/255, 160/255)
 }
-resolution_level = 5
+resolution_level = 1
 formatting_dict = {
     "linewidth_main" : 1 * resolution_level,
     "linewidth_sub" : 0.5 * resolution_level,
@@ -171,12 +173,19 @@ formatting_dict = {
     "label_fontsize" : 12 * resolution_level,
     "connection_label_fontsize" : 10 * resolution_level,
     "lng_label_fontsize" : 10 * resolution_level,
-    "cmap_main" : matplotlib.colors.LinearSegmentedColormap.from_list("", [color_dict[2],color_dict[1],color_dict[3]]),
+    "pipe_label_fontsize" : 10 * resolution_level,
+    "export_label_fontsize" : 10 * resolution_level,
+    "cmap_main" : matplotlib.colors.LinearSegmentedColormap.from_list("", [color_dict[1],color_dict[3],color_dict[2]]),
     "connection_arrow_col" : color_dict[7],
     "connection_arrow_alpha" : 1,
     "lng_connection_arrow_col" : color_dict[12],
     "lng_connection_arrow_alpha" : 1,
+    "piped_export_arrow_col" : color_dict[10],
+    "piped_export_arrow_alpha" : 1,
     "piped_import_label_col" : color_dict[6],
-    "piped_import_base_linewidth" : 10 * resolution_level
+    "piped_import_label_alpha" : 1,
+    "piped_import_arrow_alpha" : 1,
+    "piped_import_base_linewidth" : 10 * resolution_level,
+    "zoom_font_factor" : 3
 }
 
