@@ -2,7 +2,7 @@
 Main module to create scenario outputs
 '''
 
-from params import SCENARIO_FOLDER, OUTPUT_FOLDER, OUTPUT_TEMPLATE_FILE, seasons_df
+from params import SCENARIO_FOLDER, OUTPUT_FOLDER, OUTPUT_TEMPLATE_FILE, seasons_df, seasons_dict
 import excelimport as ei
 import os
 import pandas as pd
@@ -383,6 +383,7 @@ for scenario_file in scenario_file_list:
             # Add constraints so that the sum of flows will match demand
             cost_total += (exporter_demand <= piped_exporters_demand_df.loc[piped_exporter_index][cycle])
             cost_total += exporter_demand >= (piped_exporters_demand_df.loc[piped_exporter_index][cycle])
+        #TODO
         # LNG
         # LNG volume
         lng_total = (
@@ -395,15 +396,23 @@ for scenario_file in scenario_file_list:
             # Storage
             - storage_volumes_df[cycle].sum()
             # Piped Imports - min of available production and max capacity
-            - min(
-                piped_importers_production_df[cycle].sum(),
-                piped_importers_connections_data_df.xs("Capacity - Max", level = 1, drop_level = False)[cycle].sum()
+            - sum(
+                [
+                    min(
+                        piped_importers_production_df[piped_importers_production_df["Importer"] == piped_importer_row["Importer"]][cycle].sum(),
+                        piped_importers_connections_data_df[piped_importers_connections_data_df["Importer"] == piped_importer_row["Importer"]].xs("Capacity - Max", level = 1, drop_level = False)[cycle].sum()
+                    )
+                    for _, piped_importer_row in piped_importers_df.iterrows()
+                ]
             )
+            # Piped Exports
+            + piped_exporters_demand_df[cycle].sum()
         ) * unit_conversions_df.loc["GWh"]["Mt LNG"] * cycle_days
         # LNG price curve
         lng_pricelist = lng_supply_curve_df[cycle].to_frame().reset_index().values
         # LNG price at given point
-        lng_price = round(lng_pricelist[np.argmin(np.abs(lng_pricelist[0:, 0] - lng_total)), 1] / forex_conversions_df.loc["USD"][cycle] * unit_conversions_df.loc["GWh"]["MMBTU"], 2)
+        #TODO
+        lng_price = 0
         
         # Cost calculations
         regions_cost_dict = {}
@@ -429,6 +438,7 @@ for scenario_file in scenario_file_list:
             regions_cost_dict[region_key] = region_cost
         # Add up total cost and add as objective    
         cost_total += pulp.lpSum([region_data for region_key, region_data in regions_cost_dict.items()])
+        
         
         # Solve
         res = cost_total.solve(pulp.PULP_CBC_CMD(msg = 0))
@@ -477,7 +487,11 @@ for scenario_file in scenario_file_list:
         # The region is then removed from the dict
         # Continuous iteration until all solutions are found
         # Start with LNG
-        regions_prices_dict["LNG"] = lng_price * unit_conversions_df.loc["GWh"]["MWh"]
+        lng_min_flow = lng_importers_connections_data_df.xs("Capacity - Min", level = 1, drop_level = False)[cycle].sum()
+        lng_other = sum([val.value() for val in lng_importers_connections_dict.values()])
+        lng_total = (lng_min_flow + lng_other) * unit_conversions_df.loc["GWh"]["Mt LNG"] * cycle_days
+        lng_pricelist = lng_supply_curve_df[cycle].to_frame().reset_index().values
+        regions_prices_dict["LNG"] = round(lng_pricelist[np.argmin(np.abs(lng_pricelist[0:, 0] - lng_total)), 1] / forex_conversions_df.loc["USD"][cycle] * unit_conversions_df.loc["MWh"]["MMBTU"], 2)
         # Keep looping until all values have been found
         stuck = 0
         while None in regions_prices_dict.values():
@@ -640,9 +654,14 @@ for scenario_file in scenario_file_list:
         print(f"   ...cycle {cycle} ({cycle_index + 1} of {len(cycles_days_dict)}) completed")
         cycle_index += 1
         
+        '''
+        if cycle_index == 6:
+            break
+        '''
+        
     print("  Calculating seasons...")
     # Seasons
-    for season in set(seasons_df.index.values):
+    for season in seasons_dict:
         season_days = 0
         season_demand = 0
         season_production = 0
@@ -653,7 +672,7 @@ for scenario_file in scenario_file_list:
         season_connections = 0
         season_prices = 0
         season_supply_mix = 0
-        for season_index, season_data in seasons_df.loc[season].iterrows():
+        for season_index, season_data in seasons_df[seasons_df["cycle"].notnull()].loc[season].iterrows():
             # Cycle name
             season_cycle = season_data.values[0]
             # Days
@@ -697,7 +716,7 @@ for scenario_file in scenario_file_list:
         # Supply mix
         output_supply_mix_df[season] = season_supply_mix / season_days
     print(" ...seasons calculated")
-            
+           
     print("  Writing data...")
     '''
     File output

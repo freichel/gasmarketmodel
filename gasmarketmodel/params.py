@@ -120,8 +120,9 @@ output_dict = {
 
 # Seasons
 seasons_dict = {
-    "Winter" : ["Okt-21", "Nov-21", "Dez-21", "Jan-22", "Feb-22", "Mrz-22"],
-    "Sommer" : ["Apr-22", "Mai-22", "Jun-22", "Jul-22", "Aug-22", "Sep-22"]
+    "Winter" : ["Okt-21", "Nov-21", "Dez-21", "Jan-22", "Feb-22", "Mrz-22", None, None, None, None, None, None],
+    "Sommer" : ["Apr-22", "Mai-22", "Jun-22", "Jul-22", "Aug-22", "Sep-22", None, None, None, None, None, None],
+    "GY" : ["Okt-21", "Nov-21", "Dez-21", "Jan-22", "Feb-22", "Mrz-22", "Apr-22", "Mai-22", "Jun-22", "Jul-22", "Aug-22", "Sep-22"]
 }
 seasons_df = pd.melt(pd.DataFrame.from_dict(seasons_dict), var_name = "season", value_name = "cycle").set_index("season")
 
