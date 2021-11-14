@@ -80,14 +80,14 @@ piped_importer_countries = [
 
 # Output metrics
 # Label : [label_metric, colormap_metric, label_round_digits]
-output_metrics = {
+'''
     "Alles" : {
         "label_metric" : "Demand",
-        "label_digits" : 1,
+        "label_digits" : 0,
         "colormap_metric" : "Demand",
-        "colormp_digits" : 0,
-        "show_colorscale" : True,
-        "piped_imports" : 0,
+        "colormap_digits" : 0,
+        "colorscale_orientation" : "horizontal",
+        "piped_imports" : -1,
         "piped_imports_digits" : 0,
         "piped_exports" : 0,
         "piped_exports_digits" : 0,
@@ -95,12 +95,63 @@ output_metrics = {
         "lng_imports_digits" : 0,
         "aggregate_transit" : True,
         "transits" : -1,
-        "transits_digits" : 0
+        "transits_digits" : 0,
+        "zoom_creation" : True
     },
+    '''
+output_metrics = {
     "Preis" : {
+        "label_metric" : "Price",
+        "label_digits" : 1,
         "colormap_metric" : "Price",
         "colormap_digits" : 1,
-        "show_colorscale" : True
+        "colorscale_orientation" : "vertical"
+    },
+    "Supply - Pipe" : {
+        "label_metric" : "Supply",
+        "label_digits" : 0,
+        "colormap_metric" : "Piped Share",
+        "colormap_digits" : 0,
+        "colormap_percentage" : True,
+        "colorscale_orientation" : "vertical",
+        "piped_imports" : 0,
+        "piped_imports_digits" : 0,
+        "piped_exports" : 0,
+        "piped_exports_digits" : 0,
+        "aggregate_transit" : True,
+        "transits" : 0,
+        "transits_digits" : 0
+    },
+    "Demand" : {
+        "label_metric" : "Demand",
+        "label_digits" : 0,
+        "colormap_metric" : "Demand",
+        "colormap_digits" : 0,
+        "colorscale_orientation" : "vertical"
+    },
+    "Supply - LNG" : {
+        "label_metric" : "Supply",
+        "label_digits" : 0,
+        "colormap_metric" : "Piped Share",
+        "colormap_digits" : 0,
+        "colormap_percentage" : True,
+        "colorscale_orientation" : "vertical",
+        "lng_imports" : 0,
+        "lng_imports_digits" : 0
+    },
+    "Regionaler Fokus" : {
+        "label_metric" : "Demand",
+        "label_digits" : 0,
+        "piped_imports" : 0,
+        "piped_imports_digits" : 0,
+        "piped_exports" : 0,
+        "piped_exports_digits" : 0,
+        "lng_imports" : 0,
+        "lng_imports_digits" : 0,
+        "aggregate_transit" : True,
+        "transits" : 0,
+        "transits_digits" : 0,
+        "zoom_creation" : True
     }
 }
 
@@ -127,11 +178,11 @@ seasons_dict = {
 seasons_df = pd.melt(pd.DataFrame.from_dict(seasons_dict), var_name = "season", value_name = "cycle").set_index("season")
 
 # Individual countries
-zoom_list = ["Deutschland", "Italien", "Schweiz"]
+zoom_list = ["Deutschland", "Belux", "Skandinavien", "Frankreich", "Baltikum", "Niederlande", "Polen", "Iberia", "Ukeire", "Italien", "SEE-EU", "Tschechien", "Ukraine", "Slowakei"]
 zoom_padding = 1
 
 # Europe frame
-europe_x = [-12, 42]
+europe_x = [-11, 42]
 europe_y = [30, 74.5]
 europe_frame = gpd.GeoDataFrame(
     geometry = gpd.GeoSeries(
@@ -181,11 +232,11 @@ formatting_dict = {
     "connection_arrow_alpha" : 1,
     "lng_connection_arrow_col" : color_dict[12],
     "lng_connection_arrow_alpha" : 1,
-    "piped_export_arrow_col" : color_dict[10],
+    "piped_export_arrow_col" : color_dict[8],
     "piped_export_arrow_alpha" : 1,
     "piped_import_label_col" : color_dict[6],
     "piped_import_label_alpha" : 1,
-    "piped_import_arrow_alpha" : 1,
+    "piped_import_arrow_alpha" : 0.8,
     "piped_import_base_linewidth" : 10 * resolution_level,
     "zoom_font_factor" : 3
 }

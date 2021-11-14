@@ -130,6 +130,9 @@ ax.margins(0, 0)
 fig.subplots_adjust(left = 0, bottom = 0, right = 1, top = 1, hspace = 0, wspace = 0)
 fig.tight_layout()
 
+# Extent of Europe y axis
+europe_dy = ax.get_ylim()[1] - ax.get_ylim()[0]
+
 # Save base plot
 pickle.dump(fig, open(TEMP_FOLDER / "base.pkl", "wb"))
 
@@ -247,30 +250,55 @@ for scenario_index, scenario in enumerate(scenarios):
         right_on = ["Latitude", "Longitude", "Angle"]
     ).drop_duplicates(["Latitude", "Longitude"]).set_index("Region")
     
-    for metric, metric_params in output_metrics.items():
-        # Create folder if needed
-        try:
-            os.mkdir(OUTPUT_FOLDER / "scenarios" / scenario / "Markt" / metric)
-        except FileExistsError:
-            pass
-        zoom_dict = {}
-        for zoom_country in zoom_list:
-            zoom_dict[zoom_country] = {}
-            # Create folders if needed
-            try:
-                os.mkdir(OUTPUT_FOLDER / "scenarios" / scenario / zoom_country)
-            except FileExistsError:
-                pass
-            try:
-                os.mkdir(OUTPUT_FOLDER / "scenarios" / scenario / zoom_country / metric)
-            except FileExistsError:
-                pass
+    # Consolidate Piped Import flows where end points are the same
+    output_df_dict["Piped_import_cons"] = output_df_dict["Piped Imports"].groupby(["Destination Latitude", "Destination Longitude"]).sum().merge(
+        output_df_dict["Piped Imports"][["Destination Latitude", "Destination Longitude"]].drop_duplicates(["Destination Latitude", "Destination Longitude"]),
+        left_index = True,
+        right_on = ["Destination Latitude", "Destination Longitude"]
+    ).drop(columns = ["Latitude", "Longitude", "Destination Latitude", "Destination Longitude"])
+    
+    # Add "Pipeline" (Imports + transit imports)
+    output_df_dict["Pipeline"] = output_df_dict["Supply Mix"].loc[pd.IndexSlice[:, ["Piped Imports", "Transit Imports"]], :].groupby(["Region"]).sum()
+    # Add "Supply" ("Pipeline" + LNG imports)
+    output_df_dict["Supply Mix"] = pd.concat(
+        [
+            output_df_dict["Supply Mix"],
+            output_df_dict["Supply Mix"].loc[pd.IndexSlice[:, ["Pipeline", "LNG Imports"]], :].groupby(["Region"]).sum().assign(Type = "Supply").reset_index().set_index(["Region", "Type"])
+        ]
+    ).sort_index(level = 0)
+    output_df_dict["Supply"] = output_df_dict["Supply Mix"].loc[pd.IndexSlice[:, ["Piped Imports", "Transit Imports", "LNG Imports"]], :].groupby(["Region"]).sum()
+    # Add "Piped Share" ("Pipeline"/"Supply")
+    output_df_dict["Piped Share"] = output_df_dict["Pipeline"] / output_df_dict["Supply"] * 100
         
+    for metric, metric_params in output_metrics.items():
         # Parameters
         label_metric = metric_params.get("label_metric", None)
         colormap_metric = metric_params.get("colormap_metric", None)
         label_round_digits = metric_params.get("label_digits", None)
         colormap_digits = metric_params.get("colormap_digits", 0)
+        colormap_percentage = "%%" if metric_params.get("colormap_percentage", False) else ""
+        zoom_creation = metric_params.get("zoom_creation", False)
+        
+        # Create folder if needed
+        try:
+            os.mkdir(OUTPUT_FOLDER / "scenarios" / scenario / "Markt" / metric)
+        except FileExistsError:
+            pass
+        if zoom_creation:
+            zoom_dict = {}
+            for zoom_country in zoom_list:
+                zoom_dict[zoom_country] = {}
+                # Create folders if needed
+                try:
+                    os.mkdir(OUTPUT_FOLDER / "scenarios" / scenario / zoom_country)
+                except FileExistsError:
+                    pass
+                try:
+                    os.mkdir(OUTPUT_FOLDER / "scenarios" / scenario / zoom_country / metric)
+                except FileExistsError:
+                    pass
+        
+        
         
         # Merge with relevant data
         # Label data
@@ -294,9 +322,10 @@ for scenario_index, scenario in enumerate(scenarios):
             scenario_fig = pickle.load(open(TEMP_FOLDER / "base.pkl", "rb"))
             scenario_ax = scenario_fig.axes[0]
             
-            for zoom_country in zoom_list:
-                zoom_dict[zoom_country]["fig"] = pickle.load(open(TEMP_FOLDER / f"{zoom_country}.pkl", "rb"))
-                zoom_dict[zoom_country]["ax"] = zoom_dict[zoom_country]["fig"].axes[0]
+            if zoom_creation:
+                for zoom_country in zoom_list:
+                    zoom_dict[zoom_country]["fig"] = pickle.load(open(TEMP_FOLDER / f"{zoom_country}.pkl", "rb"))
+                    zoom_dict[zoom_country]["ax"] = zoom_dict[zoom_country]["fig"].axes[0]
             
             
             if isinstance(label_metric, str):
@@ -304,7 +333,7 @@ for scenario_index, scenario in enumerate(scenarios):
                 for region_index, region in label_gdf.iterrows():
                     scenario_ax.annotate(
                         xy = region["labelpoint"],
-                        text = f"{region[cycle]: .{label_round_digits}f}",
+                        text = f"{region[cycle]: ,.{label_round_digits}f}".replace(",", ";").replace(".", ",").replace(";", "."),
                         horizontalalignment = "center",
                         fontsize = formatting_dict["label_fontsize"],
                     )
@@ -319,11 +348,20 @@ for scenario_index, scenario in enumerate(scenarios):
                     linewidth = formatting_dict["linewidth_main"]
                 )
                 # Show color scale if requested
-                if metric_params.get("show_colorscale", None):
+                if metric_params.get("colorscale_orientation", None) == "horizontal":
                     cax = scenario_fig.add_axes([0.03, 0.95, 0.94, 0.02])
-                    cbar = scenario_fig.colorbar(mappable = scenario_ax.collections[-1], cax = cax, orientation = "horizontal", format = f"%.{colormap_digits}f")
+                    cbar = scenario_fig.colorbar(mappable = scenario_ax.collections[-1], cax = cax, orientation = "horizontal", format = f"%.{colormap_digits}f{colormap_percentage}")
                     for t in cbar.ax.get_xticklabels():
                         t.set_fontsize(formatting_dict["label_fontsize"])
+                elif metric_params.get("colorscale_orientation", None) == "vertical":
+                    x0, x1 = scenario_ax.get_xlim()
+                    scenario_ax.set_xlim(x0 - 4, x1 + 6)
+                    cax = scenario_fig.add_axes([0.88, 0.1, 0.04, 0.8])
+                    cbar = scenario_fig.colorbar(mappable = scenario_ax.collections[-1], cax = cax, orientation = "vertical", format = f"%.{colormap_digits}f{colormap_percentage}")
+                    for t in cbar.ax.get_yticklabels():
+                        t.set_fontsize(formatting_dict["label_fontsize"])
+                    scenario_fig.set_figheight(16.5)
+                    scenario_fig.set_figwidth(14)
             else:
                 # Plot single color
                 label_gdf.plot(
@@ -334,6 +372,103 @@ for scenario_index, scenario in enumerate(scenarios):
                     linewidth = formatting_dict["linewidth_main"]
                     )
                 
+            # Piped import flows
+            if isinstance(metric_params.get("piped_imports", None), (int, float)):
+                for piped_import_flow_index, piped_import_flow in output_df_dict["Piped_import_cons"].iterrows():
+                    # Only plot required values
+                    if piped_import_flow[cycle] > metric_params["piped_imports"]:
+                        segments = import_pipes_gdf.loc[piped_import_flow_index[0]]["points"]
+                        segment_count = len(segments)
+                        for segment_index, segment in enumerate(segments):
+                            if segment_index > 0:
+                                arrowstyle = f"-|>, head_width = 0.8, head_length = 0.5" if segment_index == segment_count - 1 else "-"
+                                scenario_ax.annotate(
+                                    "",
+                                    xy = (segment[0], segment[1]),
+                                    xytext = (segments[segment_index - 1][0], segments[segment_index - 1][1]),
+                                    arrowprops = dict(
+                                        arrowstyle = arrowstyle,
+                                        linewidth = formatting_dict["pipe_label_fontsize"],
+                                        color = formatting_dict["piped_import_label_col"],
+                                        alpha = formatting_dict["piped_import_arrow_alpha"]
+                                    )
+                                )
+                    
+                    if zoom_creation:
+                        for zoom_country in zoom_list:
+                            x_range = zoom_dict[zoom_country]["ax"].get_xlim()
+                            y_range = zoom_dict[zoom_country]["ax"].get_ylim()
+                            if piped_import_flow_index[2] == zoom_country and piped_import_flow[cycle] > metric_params["piped_imports"]:
+                                segments = import_pipes_gdf.loc[piped_import_flow_index[0]]["points"]
+                                segment_count = len(segments)
+                                for segment_index, segment in enumerate(segments):
+                                    if segment_index > 0:
+                                        arrowstyle = "-"
+                                        #arrowstyle = "->, head_width = 0.8, head_length = 0.5" if segment_index == segment_count - 1 else "-"
+                                        if (x_range[0] < segment[0] < x_range[1]) and (y_range[0] < segment[1] < y_range[1]):
+                                            x0 = segments[segment_index - 1][0]
+                                            y0 = segments[segment_index - 1][1]
+                                            x1 = segment[0]
+                                            y1 = segment[1]
+                                            slope = (y1 - y0) / (x1 - x0)
+                                            intercept = y1 - slope * x1
+                                            # If the x starting coordinate is outside
+                                            while (not (x_range[0] <= x0 <= x_range[1])) or (not (y_range[0] <= y0 <= y_range[1])):
+                                                if not (x_range[0] <= x0 <= x_range[1]):
+                                                    x0 = max(min(x_range[1], x0), x_range[0])
+                                                    y0 = slope * x0 + intercept
+                                                # If the y starting coordinate is outside
+                                                elif not (y_range[0] <= y0 <= y_range[1]):
+                                                    y0 = max(min(y_range[1], y0), y_range[0])
+                                                    x0 = (y0 - intercept) / slope
+                                            zoom_dict[zoom_country]["ax"].annotate(
+                                                "",
+                                                xytext = (x0, y0),
+                                                xy = (x1, y1),
+                                                arrowprops = dict(
+                                                    arrowstyle = arrowstyle,
+                                                    linewidth = formatting_dict["pipe_label_fontsize"] + 10,
+                                                    color = formatting_dict["piped_import_label_col"],
+                                                    alpha = formatting_dict["piped_import_arrow_alpha"]
+                                                )
+                                            )
+                # Once more for labels
+                for piped_import_flow_index, piped_import_flow in output_df_dict["Piped_import_cons"].iterrows():
+                    # Only plot required values
+                    if piped_import_flow[cycle] > metric_params["piped_imports"]:
+                        label_loc = import_pipes_labels_gdf.loc[piped_import_flow_index[0] + "_full"]["points"][0]
+                        scenario_ax.text(
+                            x = label_loc[0],
+                            y = label_loc[1],
+                            s = f"{piped_import_flow[cycle]: .{metric_params.get('piped_imports_digits', 0)}f}",
+                            ha = "center",
+                            va = "baseline",
+                            size = formatting_dict["pipe_label_fontsize"],
+                            bbox = dict(
+                                boxstyle = "round, pad = 0.1",
+                                fc = formatting_dict["piped_import_label_col"]
+                            ),
+                            alpha = formatting_dict["piped_import_label_alpha"]
+                        )
+                    
+                    if zoom_creation:
+                        for zoom_country in zoom_list:
+                            if piped_import_flow_index[2] == zoom_country and piped_import_flow[cycle] > metric_params["piped_imports"]:
+                                label_loc = import_pipes_labels_gdf.loc[piped_import_flow_index[0] + "_close"]["points"][0]
+                                zoom_dict[zoom_country]["ax"].text(
+                                    x = label_loc[0],
+                                    y = label_loc[1],
+                                    s = f"{piped_import_flow[cycle]: .{metric_params.get('piped_imports_digits', 0)}f}",
+                                    ha = "center",
+                                    va = "baseline",
+                                    size = formatting_dict["pipe_label_fontsize"] * formatting_dict["zoom_font_factor"],
+                                    bbox = dict(
+                                        boxstyle = "round, pad = 0.1",
+                                        fc = formatting_dict["piped_import_label_col"]
+                                    ),
+                                    alpha = formatting_dict["piped_import_label_alpha"]
+                                )
+            
             # Connection flows
             if isinstance(metric_params.get("transits", None), (int, float)):
                 # Aggregate flows?
@@ -375,30 +510,31 @@ for scenario_index, scenario in enumerate(scenarios):
                                 ec = "none"
                             )
                         )
-                        for zoom_country in zoom_list:
-                            marker = params_dict["C Connections"][
-                                    (
-                                        (params_dict["C Connections"]["Latitude"] == connection_flow_index[0]) &
-                                        (params_dict["C Connections"]["Longitude"] == connection_flow_index[1]) &
-                                        (params_dict["C Connections"]["new_angle"] == connection_flow_index[2])
+                        if zoom_creation:
+                            for zoom_country in zoom_list:
+                                marker = params_dict["C Connections"][
+                                        (
+                                            (params_dict["C Connections"]["Latitude"] == connection_flow_index[0]) &
+                                            (params_dict["C Connections"]["Longitude"] == connection_flow_index[1]) &
+                                            (params_dict["C Connections"]["new_angle"] == connection_flow_index[2])
+                                        )
+                                ].iloc[0]
+                                if marker["Origin"] == zoom_country or marker["Destination"] == zoom_country:
+                                    zoom_dict[zoom_country]["ax"].text(
+                                        x = connection_flow_index[1],
+                                        y = connection_flow_index[0],
+                                        rotation = connection_flow_index[2],
+                                        s = f"{abs(connection_flow['Flow']): .{metric_params.get('transit_digits', 0)}f}",
+                                        ha = "center",
+                                        va = "center",
+                                        size = formatting_dict["connection_label_fontsize"] * formatting_dict["zoom_font_factor"],
+                                        bbox = dict(
+                                            boxstyle = arrow_dir,
+                                            fc = formatting_dict["connection_arrow_col"],
+                                            alpha = formatting_dict["connection_arrow_alpha"],
+                                            ec = "none"
+                                        )
                                     )
-                            ].iloc[0]
-                            if marker["Origin"] == zoom_country or marker["Destination"] == zoom_country:
-                                zoom_dict[zoom_country]["ax"].text(
-                                    x = connection_flow_index[1],
-                                    y = connection_flow_index[0],
-                                    rotation = connection_flow_index[2],
-                                    s = f"{abs(connection_flow['Flow']): .{metric_params.get('transit_digits', 0)}f}",
-                                    ha = "center",
-                                    va = "center",
-                                    size = formatting_dict["connection_label_fontsize"] * formatting_dict["zoom_font_factor"],
-                                    bbox = dict(
-                                        boxstyle = arrow_dir,
-                                        fc = formatting_dict["connection_arrow_col"],
-                                        alpha = formatting_dict["connection_arrow_alpha"],
-                                        ec = "none"
-                                    )
-                                )
                         
             # LNG flows
             if isinstance(metric_params.get("lng_imports", None), (int, float)):
@@ -420,100 +556,25 @@ for scenario_index, scenario in enumerate(scenarios):
                                 ec = "none"
                             )
                         )
-                    for zoom_country in zoom_list:
-                        if lng_connection_flow_index == zoom_country:
-                            zoom_dict[zoom_country]["ax"].text(
-                                x = lng_connection_flow["Longitude"],
-                                y = lng_connection_flow["Latitude"],
-                                rotation = lng_connection_flow["new_angle"],
-                                s = f"{lng_connection_flow[cycle]: .{metric_params.get('lng_imports_digits', 0)}f}",
-                                ha = "center",
-                                va = "center",
-                                size = formatting_dict["lng_label_fontsize"] * formatting_dict["zoom_font_factor"],
-                                bbox = dict(
-                                    boxstyle = "larrow, pad = 0.1" if lng_connection_flow["new_angle"] == lng_connection_flow["Angle"] else "rarrow, pad = 0.1",
-                                    fc = formatting_dict["lng_connection_arrow_col"],
-                                    alpha = formatting_dict["lng_connection_arrow_alpha"],
-                                    ec = "none"
+                    if zoom_creation:
+                        for zoom_country in zoom_list:
+                            if lng_connection_flow_index == zoom_country:
+                                zoom_dict[zoom_country]["ax"].text(
+                                    x = lng_connection_flow["Longitude"],
+                                    y = lng_connection_flow["Latitude"],
+                                    rotation = lng_connection_flow["new_angle"],
+                                    s = f"{lng_connection_flow[cycle]: .{metric_params.get('lng_imports_digits', 0)}f}",
+                                    ha = "center",
+                                    va = "center",
+                                    size = formatting_dict["lng_label_fontsize"] * formatting_dict["zoom_font_factor"],
+                                    bbox = dict(
+                                        boxstyle = "larrow, pad = 0.1" if lng_connection_flow["new_angle"] == lng_connection_flow["Angle"] else "rarrow, pad = 0.1",
+                                        fc = formatting_dict["lng_connection_arrow_col"],
+                                        alpha = formatting_dict["lng_connection_arrow_alpha"],
+                                        ec = "none"
+                                    )
                                 )
-                            )
-            
-            # Piped import flows
-            if isinstance(metric_params.get("piped_imports", None), (int, float)):
-                for piped_import_flow_index, piped_import_flow in output_df_dict["Piped Imports"].iterrows():
-                    # Only plot required values
-                    if piped_import_flow[cycle] > metric_params["piped_imports"]:
-                        segments = import_pipes_gdf.loc[piped_import_flow_index[0]]["points"]
-                        segment_count = len(segments)
-                        for segment_index, segment in enumerate(segments):
-                            if segment_index > 0:
-                                head_width = 0.8 if segment_index == segment_count - 1 else 0
-                                head_length = 0.3 if segment_index == segment_count - 1 else 0
-                                scenario_ax.arrow(
-                                    x = segments[segment_index - 1][0],
-                                    y = segments[segment_index - 1][1],
-                                    dx = segment[0] - segments[segment_index - 1][0],
-                                    dy = segment[1] - segments[segment_index - 1][1],
-                                    width = 0.35,
-                                    color = formatting_dict["piped_import_label_col"],
-                                    head_width = head_width,
-                                    head_length = head_length,
-                                    length_includes_head = True,
-                                    alpha = formatting_dict["piped_import_arrow_alpha"]
-                                )
-                        label_loc = import_pipes_labels_gdf.loc[piped_import_flow_index[0] + "_full"]["points"][0]
-                        scenario_ax.text(
-                            x = label_loc[0],
-                            y = label_loc[1],
-                            s = f"{piped_import_flow[cycle]: .{metric_params.get('piped_imports_digits', 0)}f}",
-                            ha = "center",
-                            va = "baseline",
-                            size = formatting_dict["label_fontsize"],
-                            bbox = dict(
-                                boxstyle = "round, pad = 0.1",
-                                fc = formatting_dict["piped_import_label_col"]
-                            ),
-                            alpha = formatting_dict["piped_import_label_alpha"]
-                        )
-                    
-                    for zoom_country in zoom_list:
-                        x_range = zoom_dict[zoom_country]["ax"].get_xlim()
-                        y_range = zoom_dict[zoom_country]["ax"].get_ylim()
-                        if piped_import_flow_index[2] == zoom_country:
-                            segments = import_pipes_gdf.loc[piped_import_flow_index[0]]["points"]
-                            segment_count = len(segments)
-                            for segment_index, segment in enumerate(segments):
-                                if segment_index > 0:
-                                    head_width = 0.8 if segment_index == segment_count - 1 else 0
-                                    head_length = 0.3 if segment_index == segment_count - 1 else 0
-                                    if (x_range[0] < segment[0] < x_range[1]) and (y_range[0] < segment[1] < y_range[1]):
-                                        zoom_dict[zoom_country]["ax"].arrow(
-                                            x = max(min(x_range[1], segments[segment_index - 1][0]), x_range[0]),
-                                            y = max(min(y_range[1], segments[segment_index - 1][1]), y_range[0]),
-                                            dx = segment[0] - max(min(x_range[1], segments[segment_index - 1][0]), x_range[0]),
-                                            dy = segment[1] - max(min(y_range[1], segments[segment_index - 1][1]), y_range[0]),
-                                            width = 0.35,
-                                            color = formatting_dict["piped_import_label_col"],
-                                            head_width = head_width,
-                                            head_length = head_length,
-                                            length_includes_head = True,
-                                            alpha = formatting_dict["piped_import_arrow_alpha"]
-                                        )
-                            label_loc = import_pipes_labels_gdf.loc[piped_import_flow_index[0] + "_full"]["points"][0]
-                            zoom_dict[zoom_country]["ax"].text(
-                                x = label_loc[0],
-                                y = label_loc[1],
-                                s = f"{piped_import_flow[cycle]: .{metric_params.get('piped_imports_digits', 0)}f}",
-                                ha = "center",
-                                va = "baseline",
-                                size = formatting_dict["label_fontsize"] * formatting_dict["zoom_font_factor"],
-                                bbox = dict(
-                                    boxstyle = "round, pad = 0.1",
-                                    fc = formatting_dict["piped_import_label_col"]
-                                ),
-                                alpha = formatting_dict["piped_import_label_alpha"]
-                            )
-                            
+                                
             # Piped export flows
             if isinstance(metric_params.get("piped_exports", None), (int, float)):
                 for export_flow_index, export_flow in output_df_dict["Piped Exports"].iterrows():
@@ -533,23 +594,24 @@ for scenario_index, scenario in enumerate(scenarios):
                                 ec = "none"
                             )
                         )
-                    for zoom_country in zoom_list:
-                        if export_flow_index[2] == zoom_country:
-                            zoom_dict[zoom_country]["ax"].text(
-                                x = params_dict["C Piped Exporters Conn"].loc[export_flow_index[0]]["Origin Longitude"],
-                                y = params_dict["C Piped Exporters Conn"].loc[export_flow_index[0]]["Origin Latitude"],
-                                s = f"{abs(export_flow[cycle]): .{metric_params.get('piped_exports_digits', 0)}f}",
-                                ha = "center",
-                                va = "center",
-                                size = formatting_dict["export_label_fontsize"] * formatting_dict["zoom_font_factor"],
-                                bbox = dict(
-                                    boxstyle = "larrow, pad = 0.1",
-                                    fc = formatting_dict["piped_export_arrow_col"],
-                                    alpha = formatting_dict["piped_export_arrow_alpha"],
-                                    ec = "none"
+                    if zoom_creation:
+                        for zoom_country in zoom_list:
+                            if export_flow_index[2] == zoom_country:
+                                zoom_dict[zoom_country]["ax"].text(
+                                    x = params_dict["C Piped Exporters Conn"].loc[export_flow_index[0]]["Origin Longitude"],
+                                    y = params_dict["C Piped Exporters Conn"].loc[export_flow_index[0]]["Origin Latitude"],
+                                    s = f"{abs(export_flow[cycle]): .{metric_params.get('piped_exports_digits', 0)}f}",
+                                    ha = "center",
+                                    va = "center",
+                                    size = formatting_dict["export_label_fontsize"] * formatting_dict["zoom_font_factor"],
+                                    bbox = dict(
+                                        boxstyle = "larrow, pad = 0.1",
+                                        fc = formatting_dict["piped_export_arrow_col"],
+                                        alpha = formatting_dict["piped_export_arrow_alpha"],
+                                        ec = "none"
+                                    )
                                 )
-                            )
-                
+            
             scenario_fig.canvas.draw()
 
             # Massage data and save file
@@ -562,15 +624,18 @@ for scenario_index, scenario in enumerate(scenarios):
             img = Image.fromarray(RGBA)
             img.save(OUTPUT_FOLDER / "scenarios" / scenario / "Markt" / metric / f"Markt_{scenario}_{metric}_{cycle}.png", "PNG")
             
-            for zoom_country in zoom_list:
-                zoom_dict[zoom_country]["fig"].canvas.draw()
-                data = np.fromstring(zoom_dict[zoom_country]["fig"].canvas.tostring_rgb(), dtype=np.uint8, sep="")
-                data = data.reshape(zoom_dict[zoom_country]["fig"].canvas.get_width_height()[::-1] + (3,))[20 * resolution_level:-20 * resolution_level, 20 * resolution_level:-20 * resolution_level, :]
-                h, w = data.shape[:2]
-                RGBA = np.dstack((data, np.zeros((h, w), dtype = np.uint8) + 255))
-                mWhite = (RGBA[:, :, 0:3] == [255, 255, 255]).all(2)
-                RGBA[mWhite] = (255, 255, 255, 0)
-                img = Image.fromarray(RGBA)
-                img.save(OUTPUT_FOLDER / "scenarios" / scenario / zoom_country / metric / f"{zoom_country}_{scenario}_{metric}_{cycle}.png", "PNG")
-            
+            if zoom_creation:
+                for zoom_country in zoom_list:
+                    fig_range = zoom_dict[zoom_country]["fig"].canvas.get_width_height()
+                    aspect_ratio = fig_range[1] / fig_range[0]
+                    zoom_dict[zoom_country]["fig"].canvas.draw()
+                    data = np.fromstring(zoom_dict[zoom_country]["fig"].canvas.tostring_rgb(), dtype=np.uint8, sep="")
+                    data = data.reshape(zoom_dict[zoom_country]["fig"].canvas.get_width_height()[::-1] + (3,))[int(30 * aspect_ratio * resolution_level):-int(30 * aspect_ratio * resolution_level), int(20 / aspect_ratio * resolution_level):-int(55 / aspect_ratio * resolution_level), :]
+                    h, w = data.shape[:2]
+                    RGBA = np.dstack((data, np.zeros((h, w), dtype = np.uint8) + 255))
+                    mWhite = (RGBA[:, :, 0:3] == [255, 255, 255]).all(2)
+                    RGBA[mWhite] = (255, 255, 255, 0)
+                    img = Image.fromarray(RGBA)
+                    img.save(OUTPUT_FOLDER / "scenarios" / scenario / zoom_country / metric / f"{zoom_country}_{scenario}_{metric}_{cycle}.png", "PNG")
+                               
             plt.close()

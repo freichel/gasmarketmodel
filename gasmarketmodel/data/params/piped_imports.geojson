@@ -4,29 +4,6 @@
     {
       "type": "Feature",
       "properties": {
-        "name": "FR_NO_Pipe"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            4.5867919921875,
-            60.029185654654505
-          ],
-          [
-            2.70263671875,
-            55.00282580979323
-          ],
-          [
-            2.4114990234375,
-            51.04139389812637
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "name": "BE_NO_Pipe"
       },
       "geometry": {
@@ -39,152 +16,6 @@
           [
             3.1585693359375,
             51.31344707827587
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "NE_NO_Pipe"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            4.581298828125,
-            60.031929699115615
-          ],
-          [
-            5.73486328125,
-            53.291489065300226
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "UK_NO_Pipe"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            4.59503173828125,
-            60.03055770537326
-          ],
-          [
-            0.07965087890625,
-            53.667425777235316
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "GER_NO_Pipe"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            4.586791992187516,
-            60.03055770537326
-          ],
-          [
-            5.38330078125,
-            58.182288761718965
-          ],
-          [
-            6.882934570312517,
-            56.32719809668835
-          ],
-          [
-            7.253723144531267,
-            53.65440559854743
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "IT_Algeria_Pipe"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            3.62823486328125,
-            32.699488680852674
-          ],
-          [
-            8.1683349609375,
-            34.687427949314845
-          ],
-          [
-            12.58380889892578,
-            37.66588567407962
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "ES_Algeria_Tarifa_Pipe"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            3.6254882812499996,
-            32.6960216760644
-          ],
-          [
-            -1.64794921875,
-            33.47727218776036
-          ],
-          [
-            -4.976806640625,
-            34.043556504127444
-          ],
-          [
-            -5.712890625,
-            35.79108281624994
-          ],
-          [
-            -5.58929443359375,
-            36.05465038150424
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "ES_Algeria_Almeria_Pipe"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            3.6254882812499996,
-            32.69486597787505
-          ],
-          [
-            0.52734375,
-            35.003003395276714
-          ],
-          [
-            -1.3128662109375,
-            35.3285710912542
-          ],
-          [
-            -2.44171142578125,
-            36.855449936136495
           ]
         ]
       }
@@ -246,6 +77,29 @@
     {
       "type": "Feature",
       "properties": {
+        "name": "FR_NO_Pipe"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            4.5867919921875,
+            60.029185654654505
+          ],
+          [
+            2.70263671875,
+            55.00282580979323
+          ],
+          [
+            2.4114990234375,
+            51.04139389812637
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
         "name": "GER_RU_Nordstream_1"
       },
       "geometry": {
@@ -295,8 +149,8 @@
         "type": "LineString",
         "coordinates": [
           [
-            44.05517578124999,
-            60.391808675970445
+            44.05311584472656,
+            60.39146942588731
           ],
           [
             26.9384765625,
@@ -325,6 +179,33 @@
           [
             13.623046875,
             54.08517342088679
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "GER_NO_Pipe"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            4.586791992187516,
+            60.03055770537326
+          ],
+          [
+            5.38330078125,
+            58.182288761718965
+          ],
+          [
+            6.882934570312517,
+            56.32719809668835
+          ],
+          [
+            7.253723144531267,
+            53.65440559854743
           ]
         ]
       }
@@ -391,7 +272,26 @@
     {
       "type": "Feature",
       "properties": {
-        "name": "PO_RU_Pipe"
+        "name": "NE_NO_Pipe"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            4.581298828125,
+            60.031929699115615
+          ],
+          [
+            5.73486328125,
+            53.291489065300226
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "PL_RU_Pipe"
       },
       "geometry": {
         "type": "LineString",
@@ -434,22 +334,22 @@
     {
       "type": "Feature",
       "properties": {
-        "name": "PO_RU_YAMAL_Pipe"
+        "name": "PL_RU_YAMAL_Pipe"
       },
       "geometry": {
         "type": "LineString",
         "coordinates": [
           [
-            44.01123046875001,
+            44.01123046875,
             60.38671955355991
           ],
           [
-            36.70875549316406,
-            57.983351905373084
+            36.71287536621094,
+            57.98590006580031
           ],
           [
-            34.8676872253418,
-            57.368570015371
+            34.868202209472656,
+            57.36847744980295
           ],
           [
             33.046875,
@@ -468,8 +368,131 @@
             53.91728101547621
           ],
           [
-            23.818359375000004,
+            23.818359375,
             53.238920640924974
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "ES_Algeria_Almeria_Pipe"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            3.6254882812499996,
+            32.69486597787505
+          ],
+          [
+            0.52734375,
+            35.003003395276714
+          ],
+          [
+            -1.3128662109375,
+            35.3285710912542
+          ],
+          [
+            -2.44171142578125,
+            36.855449936136495
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "ES_Algeria_Tarifa_Pipe"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            3.6254882812499996,
+            32.6960216760644
+          ],
+          [
+            -1.64794921875,
+            33.47727218776036
+          ],
+          [
+            -4.976806640625,
+            34.043556504127444
+          ],
+          [
+            -5.712890625,
+            35.79108281624994
+          ],
+          [
+            -5.58929443359375,
+            36.05465038150424
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "UK_NO_Pipe"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            4.59503173828125,
+            60.03055770537326
+          ],
+          [
+            0.07965087890625,
+            53.667425777235316
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "IT_Lybia_Pipe"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            12.0794677734375,
+            32.89803818160521
+          ],
+          [
+            12.81005859375,
+            34.379712580462204
+          ],
+          [
+            14.24652099609375,
+            37.08585785263673
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "IT_Algeria_Pipe"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            3.62823486328125,
+            32.699488680852674
+          ],
+          [
+            8.1683349609375,
+            34.687427949314845
+          ],
+          [
+            12.58380889892578,
+            37.66588567407962
           ]
         ]
       }
@@ -690,8 +713,27 @@
             40.91351257612758
           ],
           [
-            25.675048828125,
-            42.39912215986002
+            25.72998046875,
+            41.3850519497068
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Ukr_RU_Pipe"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            44.022216796875,
+            60.38943385115715
+          ],
+          [
+            34.727783203125,
+            51.07937094724242
           ]
         ]
       }
@@ -739,25 +781,6 @@
           [
             26.22711181640625,
             40.93634011692373
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Ukr_RU_Pipe"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            44.022216796875,
-            60.38943385115715
-          ],
-          [
-            34.727783203125,
-            51.07937094724242
           ]
         ]
       }
@@ -853,60 +876,36 @@
         "type": "LineString",
         "coordinates": [
           [
-            44.02427673339844,
-            60.3924871655325
+            44.01123046875,
+            60.38671955355991
           ],
           [
-            40.36170959472656,
-            59.20441538832953
+            36.71287536621094,
+            57.98590006580031
           ],
           [
-            36.703948974609375,
-            57.98590006580029
+            34.868202209472656,
+            57.36847744980295
           ],
           [
-            34.874725341796875,
-            57.37356820922346
-          ],
-          [
-            33.04412841796875,
-            56.73954460814537
+            33.046875,
+            56.74067435475299
           ],
           [
             32.0745849609375,
-            56.418079442109686
+            56.41694001504086
           ],
           [
-            30.74798583984375,
-            55.92035369524598
+            29.421386718749996,
+            55.41342553237579
           ],
           [
-            29.85740661621094,
-            55.58144971869657
+            27.048339843749996,
+            53.91728101547621
           ],
           [
-            29.421386718750004,
-            55.41498460124224
-          ],
-          [
-            28.760833740234375,
-            55.00479484117744
-          ],
-          [
-            28.23348999023438,
-            54.673433924736095
-          ],
-          [
-            27.04147338867188,
-            53.920111731271824
-          ],
-          [
-            25.429229736328125,
-            53.580684475546136
-          ],
-          [
-            23.81698608398438,
-            53.241797147221924
+            23.818359375,
+            53.238920640924974
           ],
           [
             19.238433837890636,
@@ -969,22 +968,46 @@
     {
       "type": "Feature",
       "properties": {
-        "name": "IT_Lybia_Pipe"
+        "name": "CZ_RU_EUGAL_Pipe"
       },
       "geometry": {
         "type": "LineString",
         "coordinates": [
           [
-            14.24652099609375,
-            37.08585785263673
+            44.053802490234375,
+            60.39045165442906
           ],
           [
-            12.81005859375,
-            34.379712580462204
+            26.9384765625,
+            59.77852198502987
           ],
           [
-            12.0794677734375,
-            32.89803818160521
+            23.70849609375,
+            59.701013531997326
+          ],
+          [
+            21.423339843749996,
+            59.19843857520702
+          ],
+          [
+            19.79736328125,
+            57.18390185831188
+          ],
+          [
+            17.0947265625,
+            55.57834467218206
+          ],
+          [
+            14.23828125,
+            54.54657953840501
+          ],
+          [
+            13.623046875,
+            54.08517342088679
+          ],
+          [
+            13.7548828125,
+            50.736455137010665
           ]
         ]
       }
@@ -1010,8 +1033,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          3.7353515625,
-          55.10351605801967
+          4.04296875,
+          55.70235509327093
         ]
       }
     },
@@ -1062,8 +1085,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          12.15087890625,
-          37.39634613318923
+          10.458984375,
+          36.08462129606931
         ]
       }
     },
@@ -1075,8 +1098,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -5.548095703125,
-          35.43381992014202
+          -5.44921875,
+          35.205233347514536
         ]
       }
     },
@@ -1088,8 +1111,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -2.164306640625,
-          36.50963615733049
+          -2.127227783203125,
+          36.43233216371692
         ]
       }
     },
@@ -1114,8 +1137,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          29.20166015625,
-          60.87700804962625
+          29.77294921875,
+          60.52215754533236
         ]
       }
     },
@@ -1153,15 +1176,15 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          26.411132812499996,
-          54.6992335284814
+          27.09228515625,
+          54.521081495443596
         ]
       }
     },
     {
       "type": "Feature",
       "properties": {
-        "name": "PO_RU_Pipe_full"
+        "name": "PL_RU_Pipe_full"
       },
       "geometry": {
         "type": "Point",
@@ -1174,7 +1197,7 @@
     {
       "type": "Feature",
       "properties": {
-        "name": "PO_RU_YAMAL_Pipe_full"
+        "name": "PL_RU_YAMAL_Pipe_full"
       },
       "geometry": {
         "type": "Point",
@@ -1192,8 +1215,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          18.80859375,
-          40.58058466412761
+          19.577636718749996,
+          40.6306300839918
         ]
       }
     },
@@ -1205,8 +1228,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          25.6640625,
-          42.13082130188811
+          25.762939453125,
+          41.44272637767212
         ]
       }
     },
@@ -1231,8 +1254,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          26.74072265625,
-          41.13315883477399
+          27.322998046875,
+          41.31494988250965
         ]
       }
     },
@@ -1257,8 +1280,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          27.2076416015625,
-          41.91454130182335
+          27.3614501953125,
+          42.020732852644294
         ]
       }
     },
@@ -1270,8 +1293,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          15.227050781249998,
-          52.449314140869696
+          15.7598876953125,
+          52.46939684276205
         ]
       }
     },
@@ -1283,8 +1306,21 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          13.7109375,
-          51.04139389812637
+          13.720550537109375,
+          51.71171425120453
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "CZ_RU_EUGAL_Pipe_full"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.720550537109375,
+          51.71171425120453
         ]
       }
     },
@@ -1296,8 +1332,333 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          14.051513671875,
-          36.73888412439431
+          13.38134765625,
+          35.15584570226544
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Estland_RU_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          27.806396484374996,
+          57.71588512774503
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Li_RU_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          26.12548828125,
+          54.749990970226925
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "BE_NO_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.197021484375,
+          51.50190410761811
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "GER_NO_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.18505859375,
+          54.16243396806779
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "GER_RU_Nordstream_1_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          14.0185546875,
+          54.380557368630654
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "GER_RU_Nordstream_2_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          14.0185546875,
+          54.380557368630654
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "GER_RU_YAMAL_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          14.809570312499998,
+          52.429222277955134
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "FR_NO_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.4169921874999996,
+          51.1
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "ES_Algeria_Almeria_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.3126220703125,
+          36.686041276581925
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "ES_Algeria_Tarifa_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.66070556640625,
+          35.90462462222801
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "IT_Algeria_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.22802734375,
+          36.77409249464195
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "IT_Lybia_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.645019531249998,
+          36.049098959065645
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "IT_TAP_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          18.4,
+          40.49709237269567
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "NE_NO_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          5.657958984374999,
+          53.77468884583577
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "PL_RU_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.2,
+          53.370220573956786
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "PL_RU_YAMAL_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.2,
+          53.370220573956786
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "GR_TAP_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          26.8505859375,
+          40.538851525354666
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "GR_RU_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          26.96044921875,
+          41.21998578493921
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Bul_RU_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          27.3614501953125,
+          42.020732852644294
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Bul_Aser_IGB_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.762939453125,
+          41.44272637767212
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "CZ_RU_OPAL_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.721923828124998,
+          51.32374658474385
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "CZ_RU_EUGAL_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.721923828124998,
+          51.32374658474385
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "UK_NO_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.52734375,
+          54.380557368630654
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Ukr_RU_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          35.22216796875,
+          51.631657349449995
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "FI_RU_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          29.77294921875,
+          60.52215754533236
         ]
       }
     }

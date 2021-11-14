@@ -31,7 +31,7 @@ for scenario_index, scenario in enumerate(scenarios):
 # Subtract scenarios
 #TODO - make list
 base_scenario = "Master"
-alt_scenario = "Test"
+alt_scenario = "Speicher"
 
 # Initialise empty difference df dict
 diff_df_dict = {}
@@ -40,10 +40,10 @@ for output_metric in output_dict.keys():
 
 # Output file name
 try:
-    os.mkdir(OUTPUT_FOLDER / "scenarios" / f"Delta {alt_scenario}-{base_scenario}")
+    os.mkdir(OUTPUT_FOLDER / "deltas" / f"Delta_{alt_scenario}_{base_scenario}")
 except FileExistsError:
     pass
-output_file = OUTPUT_FOLDER / "scenarios" / f"Delta {alt_scenario}-{base_scenario}" / "output.xlsx"
+output_file = OUTPUT_FOLDER / "deltas" / f"Delta_{alt_scenario}_{base_scenario}" / "output.xlsx"
 # Copy template
 shutil.copyfile(OUTPUT_TEMPLATE_FILE, output_file)
 # Excel Writer
@@ -71,7 +71,7 @@ for output_key, output_data in diff_df_dict.items():
                 
 # Scenario name
 ws = wb["Scenario"]
-ws.cell(1, 3, value = f"Delta {alt_scenario}-{base_scenario}")
+ws.cell(1, 3, value = f"Delta_{alt_scenario}_{base_scenario}")
 
 # Save
 wb.save(output_file)     

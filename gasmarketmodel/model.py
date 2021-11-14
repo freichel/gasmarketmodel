@@ -383,68 +383,79 @@ for scenario_file in scenario_file_list:
             # Add constraints so that the sum of flows will match demand
             cost_total += (exporter_demand <= piped_exporters_demand_df.loc[piped_exporter_index][cycle])
             cost_total += exporter_demand >= (piped_exporters_demand_df.loc[piped_exporter_index][cycle])
-        #TODO
         # LNG
-        # LNG volume
-        lng_total = (
-            # Demand outside markets
-            lng_other_demand_dict[cycle] * unit_conversions_df.loc["Mt LNG"]["GWh"] / cycle_days
-            # Demand
-            + regions_demand_df[cycle].sum()
-            # Production
-            - regions_production_df[cycle].sum()
-            # Storage
-            - storage_volumes_df[cycle].sum()
-            # Piped Imports - min of available production and max capacity
-            - sum(
-                [
-                    min(
-                        piped_importers_production_df[piped_importers_production_df["Importer"] == piped_importer_row["Importer"]][cycle].sum(),
-                        piped_importers_connections_data_df[piped_importers_connections_data_df["Importer"] == piped_importer_row["Importer"]].xs("Capacity - Max", level = 1, drop_level = False)[cycle].sum()
-                    )
-                    for _, piped_importer_row in piped_importers_df.iterrows()
-                ]
-            )
-            # Piped Exports
-            + piped_exporters_demand_df[cycle].sum()
-        ) * unit_conversions_df.loc["GWh"]["Mt LNG"] * cycle_days
         # LNG price curve
         lng_pricelist = lng_supply_curve_df[cycle].to_frame().reset_index().values
-        # LNG price at given point
-        #TODO
-        lng_price = 0
+        # Unique prices within curve
+        unique_lng_prices = np.sort(np.unique(lng_pricelist[:, 1]))[:-1]
+        # Aggregate all LNG import connections
+        lng_supply = pulp.lpSum(lng_importers_connections_dict.values())
+        # And min flows
+        lng_min_flows = lng_importers_connections_data_df.xs(
+            "Capacity - Min",
+            level = 1,
+            drop_level = False
+        )[cycle].sum()
+        # Initialise separate models at this point
+        cost_total_dict = {}
+        for unique_lng_price in unique_lng_prices:
+            price_key = float(unique_lng_price / forex_conversions_df.loc["USD"][cycle] * unit_conversions_df.loc["MWh"]["MMBTU"])
+            # Assign constraints so far
+            cost_total_dict.update({price_key: cost_total.copy()})
+            # Range for each unique price
+            unique_lng_price_range = np.sort(np.where(lng_pricelist[:, 1] == unique_lng_price)[0])
+            # Lower end of range
+            min_lng_range = lng_pricelist[unique_lng_price_range[0], 0] * unit_conversions_df.loc["Mt LNG"]["GWh"] / cycle_days
+            cost_total_dict[price_key] += (lng_supply + lng_min_flows >= min_lng_range)
+            # Upper end of range
+            max_lng_range = lng_pricelist[unique_lng_price_range[-1] + 1, 0] * unit_conversions_df.loc["Mt LNG"]["GWh"] / cycle_days
+            cost_total_dict[price_key] += (lng_supply + lng_min_flows <= max_lng_range - 1e-5)
         
         # Cost calculations
-        regions_cost_dict = {}
-        for region_key, region_data in regions_supply_dict.items():
-            # Define binary flags for fixed tariffs
-            region_binaries = []
-            for row in region_data:
-                # Only positive variable flows
-                if row[0] == 1 and isinstance(row[1], pulp.pulp.LpVariable):
-                    region_binaries.append(pulp.LpVariable(f"Fixed_Cost_Flag_{row[5]}", cat = "Binary"))
-                    cost_total += (region_binaries[-1] >= row[1] * 0.001)
-                    cost_total += (region_binaries[-1] <= row[1] * 1e10)
-                else:
-                    region_binaries.append(0)
-            # Multiply attracted supplies (1, not -1) by their respective tariffs
-            # 0 is factor
-            # 1 is volume
-            # 2 is fixed tariff
-            # 3 is variable tariff
-            # 4 is lng switch
-            region_cost = pulp.lpSum([row[0] * row[1] * (max(row[3], 0) + row[4] * lng_price) + region_binaries[row_index] * row[2] for row_index, row in enumerate(region_data) if row[0] == 1])
-            # Append to dictionary
-            regions_cost_dict[region_key] = region_cost
-        # Add up total cost and add as objective    
-        cost_total += pulp.lpSum([region_data for region_key, region_data in regions_cost_dict.items()])
+        for lng_price in cost_total_dict.keys():
+            regions_cost_dict = {}
+            for region_key, region_data in regions_supply_dict.items():
+                # Define binary flags for fixed tariffs
+                region_binaries = []
+                for row in region_data:
+                    # Only positive variable flows
+                    if row[0] == 1 and isinstance(row[1], pulp.pulp.LpVariable):
+                        region_binaries.append(pulp.LpVariable(f"Fixed_Cost_Flag_{row[5]}", cat = "Binary"))
+                        cost_total_dict[lng_price] += (region_binaries[-1] >= row[1] * 0.001)
+                        cost_total_dict[lng_price] += (region_binaries[-1] <= row[1] * 1e10)
+                    else:
+                        region_binaries.append(0)
+                # Multiply attracted supplies (1, not -1) by their respective tariffs
+                # 0 is factor
+                # 1 is volume
+                # 2 is fixed tariff
+                # 3 is variable tariff
+                # 4 is lng switch
+                region_cost = pulp.lpSum([row[0] * row[1] * (max(row[3], 0) + row[4] * lng_price) + region_binaries[row_index] * row[2] for row_index, row in enumerate(region_data) if row[0] == 1])
+                # Append to dictionary
+                regions_cost_dict[region_key] = region_cost
+            # Add up total cost and add as objective    
+            cost_total_dict[lng_price] += pulp.lpSum([region_data for region_data in regions_cost_dict.values()])
         
         
-        # Solve
+        # Solve and find cheapest solution
+        cycle_solution = [None, None]
+        for lng_price in cost_total_dict.keys():
+            # Solve
+            res = cost_total_dict[lng_price].solve(pulp.PULP_CBC_CMD(msg = 0))
+            # Check if a solution was found
+            if res == pulp.LpStatusOptimal:
+                # If this solution is cheaper than the previous one, retain it
+                if not isinstance(cycle_solution[1], float) or cost_total_dict[lng_price].objective.value() <= cycle_solution[1]:
+                    cycle_solution[0] = lng_price
+                    cycle_solution[1] = cost_total_dict[lng_price].objective.value()
+        # Check a solution has been found
+        assert isinstance(cycle_solution[1], float)
+        # Reassign to original variable and solve
+        cost_total = cost_total_dict[cycle_solution[0]]
         res = cost_total.solve(pulp.PULP_CBC_CMD(msg = 0))
-        assert res == pulp.LpStatusOptimal
+        lng_price = cycle_solution[0]
         print("    Solution for cycle found!")
-
         
         '''
         Calculation outputs
@@ -487,11 +498,7 @@ for scenario_file in scenario_file_list:
         # The region is then removed from the dict
         # Continuous iteration until all solutions are found
         # Start with LNG
-        lng_min_flow = lng_importers_connections_data_df.xs("Capacity - Min", level = 1, drop_level = False)[cycle].sum()
-        lng_other = sum([val.value() for val in lng_importers_connections_dict.values()])
-        lng_total = (lng_min_flow + lng_other) * unit_conversions_df.loc["GWh"]["Mt LNG"] * cycle_days
-        lng_pricelist = lng_supply_curve_df[cycle].to_frame().reset_index().values
-        regions_prices_dict["LNG"] = round(lng_pricelist[np.argmin(np.abs(lng_pricelist[0:, 0] - lng_total)), 1] / forex_conversions_df.loc["USD"][cycle] * unit_conversions_df.loc["MWh"]["MMBTU"], 2)
+        regions_prices_dict["LNG"] = lng_price
         # Keep looping until all values have been found
         stuck = 0
         while None in regions_prices_dict.values():
