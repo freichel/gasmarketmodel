@@ -1150,8 +1150,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          19.6435546875,
-          57.06463027327855
+          14.0020751953125,
+          54.35815677227375
         ]
       }
     },
@@ -1163,8 +1163,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          19.6435546875,
-          57.06463027327855
+          14.0020751953125,
+          54.35815677227375
         ]
       }
     },
@@ -1659,6 +1659,110 @@
         "coordinates": [
           29.77294921875,
           60.52215754533236
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "GER_RU_Nordstream_1_start"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          28.4765625,
+          59.833775202184206
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "GER_RU_Nordstream_2_start"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          28.4765625,
+          59.833775202184206
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "CZ_RU_OPAL_Pipe_start"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          28.4765625,
+          59.833775202184206
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "CZ_RU_EUGAL_Pipe_start"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          28.4765625,
+          59.833775202184206
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "PL_RU_Pipe_start"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          30.454101562499996,
+          55.825973254619015
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "PL_RU_YAMAL_Pipe_start"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          30.454101562499996,
+          55.825973254619015
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "GER_RU_YAMAL_Pipe_start"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          30.454101562499996,
+          55.825973254619015
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Li_RU_Pipe_start"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          30.454101562499996,
+          55.825973254619015
         ]
       }
     }

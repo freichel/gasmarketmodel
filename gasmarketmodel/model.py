@@ -163,6 +163,7 @@ for scenario_file in scenario_file_list:
     output_storage_volumes_df = storage_volumes_df.copy()
     output_connections_df = pd.DataFrame()
     output_prices_df = pd.DataFrame()
+    output_cost_df = pd.DataFrame()
     output_supply_mix_df = pd.DataFrame(
         0,
         pd.MultiIndex.from_product(
@@ -275,7 +276,7 @@ for scenario_file in scenario_file_list:
                         1,
                         piped_importers_connections_dict[piped_importer_id],
                         piped_importers_connections_data_df.loc[piped_importer, "Cost to Market - fixed"][cycle],
-                        piped_importers_connections_data_df.loc[piped_importer, "Cost to Market - variable"][cycle] / unit_conversions_df.loc["GWh"]["MWh"],
+                        piped_importers_connections_data_df.loc[piped_importer, "Cost to Market - variable"][cycle] * unit_conversions_df.loc["GWh"]["MWh"],
                         0,
                         piped_importer,
                         "Pipe"
@@ -308,7 +309,7 @@ for scenario_file in scenario_file_list:
                         1,
                         lng_importers_connections_dict[lng_importer_id],
                         lng_importers_connections_data_df.loc[lng_importer, "Cost to Market - fixed"][cycle],
-                        lng_importers_connections_data_df.loc[lng_importer, "Cost to Market - variable"][cycle] / unit_conversions_df.loc["GWh"]["MWh"],
+                        lng_importers_connections_data_df.loc[lng_importer, "Cost to Market - variable"][cycle] * unit_conversions_df.loc["GWh"]["MWh"],
                         1,
                         lng_importer,
                         "LNG"
@@ -326,7 +327,7 @@ for scenario_file in scenario_file_list:
                         1,
                         connections_dict[importer_id],
                         connections_data_df.loc[importer, "Tariff - fixed"][cycle],
-                        connections_data_df.loc[importer, "Tariff - variable"][cycle] / unit_conversions_df.loc["GWh"]["MWh"],
+                        connections_data_df.loc[importer, "Tariff - variable"][cycle] * unit_conversions_df.loc["GWh"]["MWh"],
                         0,
                         importer,
                         connections_df[connections_df["Name"] == importer]["Origin"].item()
@@ -339,7 +340,7 @@ for scenario_file in scenario_file_list:
                 # Min flow
                 regions_supply_dict[region_index].append([-1, connections_data_df.loc[exporter, "Capacity - Min"][cycle], 0, 0, 0, f"{exporter} - Min", ""])
                 # Variable flow
-                regions_supply_dict[region_index].append([-1, connections_dict[exporter_id], 0, -connections_data_df.loc[exporter, "Tariff - variable"][cycle] / unit_conversions_df.loc["GWh"]["MWh"], 0, exporter, connections_df[connections_df["Name"] == exporter]["Destination"].item()])
+                regions_supply_dict[region_index].append([-1, connections_dict[exporter_id], 0, -connections_data_df.loc[exporter, "Tariff - variable"][cycle] * unit_conversions_df.loc["GWh"]["MWh"], 0, exporter, connections_df[connections_df["Name"] == exporter]["Destination"].item()])
 
 
         '''
@@ -431,7 +432,7 @@ for scenario_file in scenario_file_list:
                 # 2 is fixed tariff
                 # 3 is variable tariff
                 # 4 is lng switch
-                region_cost = pulp.lpSum([row[0] * row[1] * (max(row[3], 0) + row[4] * lng_price) + region_binaries[row_index] * row[2] for row_index, row in enumerate(region_data) if row[0] == 1])
+                region_cost = pulp.lpSum([row[0] * row[1] * (max(row[3], 0) + row[4] * lng_price * unit_conversions_df.loc["GWh"]["MWh"]) + region_binaries[row_index] * row[2] for row_index, row in enumerate(region_data) if row[0] == 1])
                 # Append to dictionary
                 regions_cost_dict[region_key] = region_cost
             # Add up total cost and add as objective    
@@ -440,9 +441,9 @@ for scenario_file in scenario_file_list:
         
         # Solve and find cheapest solution
         cycle_solution = [None, None]
-        for lng_price in cost_total_dict.keys():
+        for idx, lng_price in enumerate(cost_total_dict.keys()):
             # Solve
-            res = cost_total_dict[lng_price].solve(pulp.PULP_CBC_CMD(msg = 0))
+            res = cost_total_dict[lng_price].solve(pulp.PULP_CBC_CMD(msg = 0, timeLimit = 20, gapRel = 0.1))
             # Check if a solution was found
             if res == pulp.LpStatusOptimal:
                 # If this solution is cheaper than the previous one, retain it
@@ -453,9 +454,9 @@ for scenario_file in scenario_file_list:
         assert isinstance(cycle_solution[1], float)
         # Reassign to original variable and solve
         cost_total = cost_total_dict[cycle_solution[0]]
-        res = cost_total.solve(pulp.PULP_CBC_CMD(msg = 0))
+        res = cost_total.solve(pulp.PULP_CBC_CMD(msg = 0, timeLimit = 20, gapRel = 0.1))
         lng_price = cycle_solution[0]
-        print("    Solution for cycle found!")
+        print(f"    Solution for cycle found ({round(lng_price, 2)})!")
         
         '''
         Calculation outputs
@@ -485,7 +486,7 @@ for scenario_file in scenario_file_list:
                         regions_sources_dict[region_key].append(
                             [
                                 region_vars[6],
-                                region_vars[3] * unit_conversions_df.loc["GWh"]["MWh"]
+                                region_vars[3] / unit_conversions_df.loc["GWh"]["MWh"]
                             ]
                         )
             # We actually only need to keep exports (negative tariffs) if no positive ones exist (see above)
@@ -631,12 +632,14 @@ for scenario_file in scenario_file_list:
                 cycle
             ] = connection.value() + connections_data_df.loc[connection_name, "Capacity - Min"][cycle]
             
-        # Prices
+        # Prices and Cost
         # Only in first cycle
         if cycle_index == 0:
             output_prices_df = output_prices_df.from_dict(regions_prices_dict, orient = "index", columns = [cycle])
+            output_cost_df[cycle] = (output_prices_df[cycle] * cycle_days * output_demand_df[cycle] / 1000).rename_axis("region")
         else:
             output_prices_df[cycle] = pd.Series(regions_prices_dict)
+            output_cost_df[cycle] = output_prices_df[cycle] * cycle_days * output_demand_df[cycle] / 1000
         
         # Regional supply mix
         output_supply_mix_dict = {}
@@ -661,10 +664,6 @@ for scenario_file in scenario_file_list:
         print(f"   ...cycle {cycle} ({cycle_index + 1} of {len(cycles_days_dict)}) completed")
         cycle_index += 1
         
-        '''
-        if cycle_index == 6:
-            break
-        '''
         
     print("  Calculating seasons...")
     # Seasons
@@ -679,6 +678,7 @@ for scenario_file in scenario_file_list:
         season_connections = 0
         season_prices = 0
         season_supply_mix = 0
+        season_cost = 0
         for season_index, season_data in seasons_df[seasons_df["cycle"].notnull()].loc[season].iterrows():
             # Cycle name
             season_cycle = season_data.values[0]
@@ -702,6 +702,8 @@ for scenario_file in scenario_file_list:
             season_prices += (output_demand_df[season_cycle] * cycles_days_dict[season_cycle] * output_prices_df[season_cycle]).fillna(output_prices_df[season_cycle] * cycles_days_dict[season_cycle])
             # Supply mix
             season_supply_mix += output_supply_mix_df[season_cycle] * cycles_days_dict[season_cycle]
+            # Cost
+            season_cost += output_cost_df[season_cycle]
         # Demand
         output_demand_df[season] = season_demand / season_days
         # Production
@@ -722,6 +724,8 @@ for scenario_file in scenario_file_list:
         output_prices_df[season] = (season_prices / season_demand).fillna(season_prices / season_days)
         # Supply mix
         output_supply_mix_df[season] = season_supply_mix / season_days
+        # Cost
+        output_cost_df[season] = season_cost
     print(" ...seasons calculated")
            
     print("  Writing data...")
@@ -733,7 +737,8 @@ for scenario_file in scenario_file_list:
     output_dict = {
         "Demand": [output_demand_df.sort_index(), True, 0],
         "Production": [output_production_df.sort_index(), True, 0],
-        "Price": [output_prices_df.sort_index(), False, 0],
+        "Price": [output_prices_df.sort_index().rename_axis("Region"), False, 0],
+        "Cost": [output_cost_df.dropna().sort_index(), True, 0],
         "Storage Volumes": [output_storage_volumes_df.sort_index(), True, 0],
         "Storage Levels": [output_storage_df.sort_index(), True, 1],
         "LNG": [output_lng_importers_df.sort_values(["Terminal", "Region"]), True, 8],
@@ -742,6 +747,7 @@ for scenario_file in scenario_file_list:
         "Connections": [output_connections_df.sort_values(["Origin", "Destination"]), False, 12],
         "Supply Mix": [output_supply_mix_df.sort_index().reset_index().set_index("Region"), False, 12]
     }
+    
     # Output file name
     try:
         os.mkdir(OUTPUT_FOLDER / "scenarios" / scenario)

@@ -78,61 +78,70 @@ piped_importer_countries = [
     "Russland"
 ]
 
+# Colors and formatting
+color_dict = {
+    1 : (192/255, 192/255, 255/255),
+    2 : (51/255, 51/255, 153/255),
+    3 : (133/255, 133/255, 194/255),
+    4 : (0/255, 0/255, 255/255),
+    5 : (127/255, 127/255, 127/255),
+    6 : (255/255, 204/255, 0/255),
+    7 : (255/255, 153/255, 0/255),
+    8 : (237/255, 96/255, 9/255),
+    9 : (255/255, 0/255, 0/255),
+    10 : (0/255, 153/255, 0/255),
+    11 : (60/255, 60/255, 160/255),
+    12 : (112/255, 48/255, 160/255)
+}
+resolution_level = 1
+formatting_dict = {
+    "linewidth_main" : 1 * resolution_level,
+    "linewidth_sub" : 0.5 * resolution_level,
+    "linewidth_importer" : 1 * resolution_level,
+    "edgecolor_main" : "black",
+    "edgecolor_sub" : "grey",
+    "edgecolor_importer" : "grey",
+    "facecolor_main" : color_dict[1],
+    "facecolor_sub" : (0.95, 0.95, 0.95),
+    "facecolor_importer" : color_dict[6],
+    "alpha_main" : 0.8,
+    "label_fontsize" : 12 * resolution_level,
+    "connection_label_fontsize" : 10 * resolution_level,
+    "lng_label_fontsize" : 10 * resolution_level,
+    "lng_label_fontcolor" : "white",
+    "pipe_label_fontsize" : 10 * resolution_level,
+    "export_label_fontsize" : 10 * resolution_level,
+    "cmap_main" : matplotlib.colors.LinearSegmentedColormap.from_list("", [color_dict[1], color_dict[3], color_dict[2]]),
+    "cmap_price" : matplotlib.colors.LinearSegmentedColormap.from_list("", [color_dict[10], "white", color_dict[9]]),
+    "connection_arrow_col" : color_dict[7],
+    "connection_arrow_alpha" : 1,
+    "lng_connection_arrow_col" : color_dict[12],
+    "lng_connection_arrow_alpha" : 1,
+    "piped_export_arrow_col" : color_dict[8],
+    "piped_export_arrow_alpha" : 1,
+    "piped_import_label_col" : color_dict[6],
+    "piped_import_label_alpha" : 1,
+    "piped_import_arrow_alpha" : 1,
+    "piped_import_alpha" : 0.6,
+    "piped_import_base_linewidth" : 10 * resolution_level,
+    "zoom_font_factor" : 3
+}
+
 # Output metrics
-# Label : [label_metric, colormap_metric, label_round_digits]
-'''
-    "Alles" : {
-        "label_metric" : "Demand",
-        "label_digits" : 0,
-        "colormap_metric" : "Demand",
-        "colormap_digits" : 0,
-        "colorscale_orientation" : "horizontal",
-        "piped_imports" : -1,
-        "piped_imports_digits" : 0,
-        "piped_exports" : 0,
-        "piped_exports_digits" : 0,
-        "lng_imports" : -1,
-        "lng_imports_digits" : 0,
-        "aggregate_transit" : True,
-        "transits" : -1,
-        "transits_digits" : 0,
-        "zoom_creation" : True
-    },
-    '''
 output_metrics = {
     "Preis" : {
         "label_metric" : "Price",
         "label_digits" : 1,
         "colormap_metric" : "Price",
         "colormap_digits" : 1,
-        "colorscale_orientation" : "vertical"
-    },
-    "Supply - Pipe" : {
-        "label_metric" : "Supply",
-        "label_digits" : 0,
-        "colormap_metric" : "Piped Share",
-        "colormap_digits" : 0,
-        "colormap_percentage" : True,
         "colorscale_orientation" : "vertical",
-        "piped_imports" : 0,
-        "piped_imports_digits" : 0,
-        "piped_exports" : 0,
-        "piped_exports_digits" : 0,
-        "aggregate_transit" : True,
-        "transits" : 0,
-        "transits_digits" : 0
-    },
-    "Demand" : {
-        "label_metric" : "Demand",
-        "label_digits" : 0,
-        "colormap_metric" : "Demand",
-        "colormap_digits" : 0,
-        "colorscale_orientation" : "vertical"
+        "colormap" : formatting_dict["cmap_price"]
     },
     "Supply - LNG" : {
-        "label_metric" : "Supply",
+        "label_metric" : "LNG Supply",
         "label_digits" : 0,
-        "colormap_metric" : "Piped Share",
+        "label_color" : "white",
+        "colormap_metric" : "LNG Share",
         "colormap_digits" : 0,
         "colormap_percentage" : True,
         "colorscale_orientation" : "vertical",
@@ -152,14 +161,61 @@ output_metrics = {
         "transits" : 0,
         "transits_digits" : 0,
         "zoom_creation" : True
+    },
+    "Supply - Pipe" : {
+        "label_metric" : "Pipeline",
+        "label_digits" : 0,
+        "label_color" : "white",
+        "colormap_metric" : "Piped Share",
+        "colormap_digits" : 0,
+        "colormap_percentage" : True,
+        "colorscale_orientation" : "vertical",
+        "piped_imports" : 0,
+        "piped_imports_digits" : 0,
+        "piped_exports" : 0,
+        "piped_exports_digits" : 0,
+        "aggregate_transit" : True,
+        "transits" : 0,
+        "transits_digits" : 0
+    },
+    "Demand" : {
+        "label_metric" : "Demand",
+        "label_digits" : 0,
+        "colormap_metric" : "Demand",
+        "colormap_digits" : 0,
+        "colorscale_orientation" : "vertical"
     }
 }
+
+'''
+"Alles" : {
+        "label_metric" : "Demand",
+        "label_digits" : 0,
+        "label_color" : "white",
+        "colormap_metric" : "LNG Share",
+        "colormap_digits" : 0,
+        "colormap_percentage" : True,
+        "colorscale_orientation" : "horizontal",
+        "colormap" : formatting_dict["cmap_price"],
+        "piped_imports" : -1,
+        "piped_imports_digits" : 0,
+        "piped_exports" : 0,
+        "piped_exports_digits" : 0,
+        "lng_imports" : -1,
+        "lng_imports_digits" : 0,
+        "aggregate_transit" : True,
+        "transits" : -1,
+        "transits_digits" : 0,
+        "zoom_creation" : True
+    }
+'''
 
 # Label/sheet name : total_row_switch, row offset, index columns
 output_dict = {
     "Demand" : [True, 0, 0],
     "Production" : [True, 0, 0],
     "Price" : [False, 0, 0],
+    "Cost" : [True, 0, 0],
     "Storage Volumes": [True, 0, 0],
     "Storage Levels": [True, 1, 0],
     "LNG" : [True, 8, [0, 1, 2]],
@@ -195,49 +251,3 @@ europe_frame = gpd.GeoDataFrame(
         index = ["Europe"]
     )
 ).set_crs(epsg = 4326)
-
-# Colors and formatting
-color_dict = {
-    1 : (192/255, 192/255, 255/255),
-    2 : (51/255, 51/255, 153/255),
-    3 : (133/255, 133/255, 194/255),
-    4 : (0/255, 0/255, 255/255),
-    5 : (127/255, 127/255, 127/255),
-    6 : (255/255, 204/255, 0/255),
-    7 : (255/255, 153/255, 0/255),
-    8 : (237/255, 96/255, 9/255),
-    9 : (255/255, 0/255, 0/255),
-    10 : (0/255, 153/255, 0/255),
-    11 : (60/255, 60/255, 160/255),
-    12 : (112/255, 48/255, 160/255)
-}
-resolution_level = 1
-formatting_dict = {
-    "linewidth_main" : 1 * resolution_level,
-    "linewidth_sub" : 0.5 * resolution_level,
-    "linewidth_importer" : 1 * resolution_level,
-    "edgecolor_main" : "black",
-    "edgecolor_sub" : "grey",
-    "edgecolor_importer" : "grey",
-    "facecolor_main" : color_dict[1],
-    "facecolor_sub" : (0.95, 0.95, 0.95),
-    "facecolor_importer" : color_dict[6],
-    "label_fontsize" : 12 * resolution_level,
-    "connection_label_fontsize" : 10 * resolution_level,
-    "lng_label_fontsize" : 10 * resolution_level,
-    "pipe_label_fontsize" : 10 * resolution_level,
-    "export_label_fontsize" : 10 * resolution_level,
-    "cmap_main" : matplotlib.colors.LinearSegmentedColormap.from_list("", [color_dict[1],color_dict[3],color_dict[2]]),
-    "connection_arrow_col" : color_dict[7],
-    "connection_arrow_alpha" : 1,
-    "lng_connection_arrow_col" : color_dict[12],
-    "lng_connection_arrow_alpha" : 1,
-    "piped_export_arrow_col" : color_dict[8],
-    "piped_export_arrow_alpha" : 1,
-    "piped_import_label_col" : color_dict[6],
-    "piped_import_label_alpha" : 1,
-    "piped_import_arrow_alpha" : 0.8,
-    "piped_import_base_linewidth" : 10 * resolution_level,
-    "zoom_font_factor" : 3
-}
-

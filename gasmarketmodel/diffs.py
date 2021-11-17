@@ -13,6 +13,7 @@ scenarios = [scenario for scenario in os.listdir(OUTPUT_FOLDER / "scenarios") if
 
 # Initialise empty dictionary
 scenario_dict = {}
+scenario_price_dict = {}
 
 # Iterate over all scenarios
 for scenario_index, scenario in enumerate(scenarios):
@@ -27,11 +28,21 @@ for scenario_index, scenario in enumerate(scenarios):
             skiprows = 4 + output_params[1],
             index_col = output_params[2]
         )
-
+        
+    # Read in total prices
+    scenario_price_dict[scenario] = {}
+    wb = openpyxl.load_workbook(OUTPUT_FOLDER / "scenarios" /  scenario / "output.xlsx")
+    ws = wb["Charting"]
+    for col in range(4, 16):
+        scenario_price_dict[scenario][ws.cell(row = 1, column = col).value] = scenario_dict[scenario]["Cost"].iloc[-1, col-2] / scenario_dict[scenario]["Demand"].iloc[-1, col-2] / int(ws.cell(row = 2, column = col).value) * 1000
+    scenario_price_dict[scenario][ws.cell(row = 1, column = 17).value] = scenario_dict[scenario]["Cost"].iloc[-1, 17] / scenario_dict[scenario]["Demand"].iloc[-1, 17] / int(ws.cell(row = 2, column = 17).value) * 1000
+    scenario_price_dict[scenario][ws.cell(row = 1, column = 18).value] = scenario_dict[scenario]["Cost"].iloc[-1, 18] / scenario_dict[scenario]["Demand"].iloc[-1, 18] / int(ws.cell(row = 2, column = 18).value) * 1000
+    scenario_price_dict[scenario][ws.cell(row = 1, column = 20).value] = scenario_dict[scenario]["Cost"].iloc[-1, 19] / scenario_dict[scenario]["Demand"].iloc[-1, 19] / int(ws.cell(row = 2, column = 20).value) * 1000
+    
 # Subtract scenarios
 #TODO - make list
-base_scenario = "Master"
-alt_scenario = "Speicher"
+base_scenario = "No NS2"
+alt_scenario = "Master"
 
 # Initialise empty difference df dict
 diff_df_dict = {}
@@ -73,5 +84,11 @@ for output_key, output_data in diff_df_dict.items():
 ws = wb["Scenario"]
 ws.cell(1, 3, value = f"Delta_{alt_scenario}_{base_scenario}")
 
+# Total Price delta
+ws = wb["Charting"]
+for col in range(4, 21):
+    if isinstance(ws.cell(row = 1, column = col).value, str):
+        ws.cell(row = 10, column = col, value = scenario_price_dict[alt_scenario][ws.cell(row = 1, column = col).value] - scenario_price_dict[base_scenario][ws.cell(row = 1, column = col).value])
+        
 # Save
 wb.save(output_file)     
