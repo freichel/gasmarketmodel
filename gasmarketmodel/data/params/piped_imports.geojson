@@ -741,6 +741,114 @@
     {
       "type": "Feature",
       "properties": {
+        "name": "HUN_Ukr_RU_Pipe"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            44.022216796876,
+            60.38943385115715
+          ],
+          [
+            34.727783203125,
+            51.07937094724242
+          ],
+          [
+            24.78515625,
+            48.980216985374994
+          ],
+          [
+            22.2802734375,
+            48.3416461723746
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "PL_Ukr_RU_Pipe"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            44.022216796877,
+            60.38943385115715
+          ],
+          [
+            34.727783203125,
+            51.07937094724242
+          ],
+          [
+            24.78515625,
+            48.980216985374994
+          ],
+          [
+            24.08203125,
+            50.86144411058924
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "RO_Ukr_RU_Pipe"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            44.022216796878,
+            60.38943385115715
+          ],
+          [
+            34.727783203125,
+            51.07937094724242
+          ],
+          [
+            24.78515625,
+            48.980216985374994
+          ],
+          [
+            25.46630859375,
+            47.916342040161155
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "SK_Ukr_RU_Pipe"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            44.022216796879,
+            60.38943385115715
+          ],
+          [
+            34.727783203125,
+            51.07937094724242
+          ],
+          [
+            24.78515625,
+            48.980216985374994
+          ],
+          [
+            22.631835937499996,
+            48.980216985374994
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
         "name": "GR_TAP_Pipe"
       },
       "geometry": {
@@ -1267,8 +1375,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          35.22216796875,
-          51.631657349449995
+          34.98046875,
+          51.2206474303833
         ]
       }
     },
@@ -1644,8 +1752,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          35.22216796875,
-          51.631657349449995
+          34.98046875,
+          51.2206474303833
         ]
       }
     },
@@ -1763,6 +1871,175 @@
         "coordinates": [
           30.454101562499996,
           55.825973254619015
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "PL_Ukr_RU_Pipe_full"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.235839843749996,
+          50.45750402042058
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "SK_Ukr_RU_Pipe_full"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          22.631835937499996,
+          49.009050809382046
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HUN_Ukr_RU_Pipe_full"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.13720703125,
+          48.574789910928864
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "RO_Ukr_RU_Pipe_full"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.400390625,
+          48.06339653776211
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "PL_Ukr_RU_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.235839843749996,
+          50.45750402042058
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "SK_Ukr_RU_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          22.631835937499996,
+          49.009050809382046
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HUN_Ukr_RU_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.13720703125,
+          48.574789910928864
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "RO_Ukr_RU_Pipe_close"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.400390625,
+          48.06339653776211
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Ukr_RU_Pipe_start"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.1337890625,
+          53.74871079689897
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "PL_Ukr_RU_Pipe_start"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.1337890625,
+          53.74871079689897
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "RO_Ukr_RU_Pipe_start"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.1337890625,
+          53.74871079689897
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "SK_Ukr_RU_Pipe_start"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.1337890625,
+          53.74871079689897
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HUN_Ukr_RU_Pipe_start"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.1337890625,
+          53.74871079689897
         ]
       }
     }

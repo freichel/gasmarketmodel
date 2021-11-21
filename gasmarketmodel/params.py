@@ -113,6 +113,7 @@ formatting_dict = {
     "export_label_fontsize" : 10 * resolution_level,
     "cmap_main" : matplotlib.colors.LinearSegmentedColormap.from_list("", [color_dict[1], color_dict[3], color_dict[2]]),
     "cmap_price" : matplotlib.colors.LinearSegmentedColormap.from_list("", [color_dict[10], "white", color_dict[9]]),
+    "cmap_pricedelta" : matplotlib.colors.LinearSegmentedColormap.from_list("", [color_dict[10], "white"]),
     "connection_arrow_col" : color_dict[7],
     "connection_arrow_alpha" : 1,
     "lng_connection_arrow_col" : color_dict[12],
@@ -129,13 +130,26 @@ formatting_dict = {
 
 # Output metrics
 output_metrics = {
-    "Preis" : {
-        "label_metric" : "Price",
+    "Preisdelta zu TTF" : {
+        "label_metric" : "Price Delta",
         "label_digits" : 1,
-        "colormap_metric" : "Price",
+        "colormap_metric" : "Price Delta",
         "colormap_digits" : 1,
         "colorscale_orientation" : "vertical",
-        "colormap" : formatting_dict["cmap_price"]
+        "colormap" : formatting_dict["cmap_pricedelta"],
+        "use_for" : ["scenario"],
+        "delta_signs" : True
+    },
+    "Preisdifferenz prozentual" : {
+        "label_metric" : "Price Change",
+        "label_digits" : 1,
+        "colormap_metric" : "Price Change",
+        "colormap_digits" : 1,
+        "colorscale_orientation" : "vertical",
+        "colormap" : formatting_dict["cmap_pricedelta"],
+        "colormap_percentage" : True,
+        "label_pct" : True,
+        "use_for" : ["delta"]
     },
     "Supply - LNG" : {
         "label_metric" : "LNG Supply",
@@ -147,20 +161,6 @@ output_metrics = {
         "colorscale_orientation" : "vertical",
         "lng_imports" : 0,
         "lng_imports_digits" : 0
-    },
-    "Regionaler Fokus" : {
-        "label_metric" : "Demand",
-        "label_digits" : 0,
-        "piped_imports" : 0,
-        "piped_imports_digits" : 0,
-        "piped_exports" : 0,
-        "piped_exports_digits" : 0,
-        "lng_imports" : 0,
-        "lng_imports_digits" : 0,
-        "aggregate_transit" : True,
-        "transits" : 0,
-        "transits_digits" : 0,
-        "zoom_creation" : True
     },
     "Supply - Pipe" : {
         "label_metric" : "Pipeline",
@@ -188,6 +188,7 @@ output_metrics = {
 }
 
 '''
+
 "Alles" : {
         "label_metric" : "Demand",
         "label_digits" : 0,
@@ -209,6 +210,7 @@ output_metrics = {
         "zoom_creation" : True
     }
 '''
+output_seasons_only = True
 
 # Label/sheet name : total_row_switch, row offset, index columns
 output_dict = {
@@ -223,6 +225,16 @@ output_dict = {
     "Piped Exports" : [True, 12, [0, 1, 2]],
     "Connections" : [False, 12, [0, 1, 2]],
     "Supply Mix" : [False, 12, [0, 1]]
+}
+
+# Ukraine flows
+ukraine_min_flow = 987.394
+ukraine_storage_export_pct = 0.6
+ukraine_pipes = {
+    "PL_Ukr_RU_Pipe" : ["PL_Ukr_Pipe"],
+    "RO_Ukr_RU_Pipe" : ["RO_Ukr_Pipe", "RO_Ukr_TBP_Pipe"],
+    "SK_Ukr_RU_Pipe" : ["SK_Ukr_Pipe"],
+    "HUN_Ukr_RU_Pipe" : ["HUN_Ukr_Pipe"]
 }
 
 # Seasons

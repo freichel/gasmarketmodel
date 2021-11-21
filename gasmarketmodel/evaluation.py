@@ -10,7 +10,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from params import OUTPUT_FOLDER, TEMP_FOLDER, PARAMS_FOLDER, europe_frame, COUNTRY_SHAPE_FILE, country_translations, piped_importer_countries, output_metrics, formatting_dict, output_dict, resolution_level, zoom_list, zoom_padding
+from params import OUTPUT_FOLDER, TEMP_FOLDER, PARAMS_FOLDER, europe_frame, COUNTRY_SHAPE_FILE, country_translations, piped_importer_countries, output_metrics, formatting_dict, output_dict, resolution_level, zoom_list, zoom_padding, output_seasons_only
 from PIL import Image
 import pickle
 from shapely.geometry import Polygon, LineString, Point
@@ -32,7 +32,6 @@ def compare_angles(df_row):
     if df_row["Angle"] == df_row["new_angle"]:
         return 1
     return -1
-
 
 '''
 Read in parameters
@@ -201,10 +200,10 @@ for zoom_country in zoom_list:
     pickle.dump(zoom_fig, open(TEMP_FOLDER / f"{zoom_country}.pkl", "wb"))
 
 # Find all scenarios
-scenarios = [scenario for scenario in os.listdir(OUTPUT_FOLDER / "scenarios") if os.path.isdir(os.path.join(OUTPUT_FOLDER / "scenarios", scenario)) and os.path.isfile(OUTPUT_FOLDER / "scenarios" /  scenario / "output.xlsx")]
+scenarios = [scenario for scenario in os.listdir(OUTPUT_FOLDER / "scenarios") if os.path.isdir(os.path.join(OUTPUT_FOLDER / "scenarios", scenario)) and os.path.isfile(OUTPUT_FOLDER / "scenarios" /  scenario / f"output_{scenario}.xlsx")]
 
 # Find all deltas
-deltas = [delta for delta in os.listdir(OUTPUT_FOLDER / "deltas") if os.path.isdir(os.path.join(OUTPUT_FOLDER / "deltas", delta)) and os.path.isfile(OUTPUT_FOLDER / "deltas" /  delta / "output.xlsx")]
+deltas = [delta for delta in os.listdir(OUTPUT_FOLDER / "deltas") if os.path.isdir(os.path.join(OUTPUT_FOLDER / "deltas", delta)) and os.path.isfile(OUTPUT_FOLDER / "deltas" /  delta / f"output_{delta}.xlsx")]
 scenario_deltas = {scenario: [] for scenario in scenarios}
 for delta in deltas:
     scenario_deltas[delta[delta.rfind("_")+1:]].append(delta)
@@ -220,9 +219,6 @@ for scenario, scenario_data in scenario_dict.items():
     # Initialise empty dictionary
     output_df_dict = {}
     
-    # Leading zeros
-    leading_zero = "" if scenario_data[0] == "scenario" else "+"
-    
     # Create folder
     try:
         os.mkdir(OUTPUT_FOLDER / scenario_data[1] / scenario / "Markt")
@@ -232,7 +228,7 @@ for scenario, scenario_data in scenario_dict.items():
     # Read in data from each sheet
     for output_metric, output_params in output_dict.items():
         output_df_dict[output_metric] = pd.read_excel(
-            io = OUTPUT_FOLDER / scenario_data[1] /  scenario / "output.xlsx",
+            io = OUTPUT_FOLDER / scenario_data[1] / scenario / f"output_{scenario}.xlsx",
             sheet_name = output_metric,
             skiprows = 4 + output_params[1],
             index_col = output_params[2]
@@ -284,6 +280,12 @@ for scenario, scenario_data in scenario_dict.items():
         right_on = output_df_dict["Piped Imports"].index.get_level_values("Name")
     ).drop(columns = ["name", "Destination Latitude", "Destination Longitude", "Latitude", "Longitude"], errors = "ignore").set_index("idx").groupby(["x", "y"]).sum()
     
+    # Add "Price Delta" (Delta to NL - TTF proxy - price)
+    output_df_dict["Price Delta"] = output_df_dict["Price"] - output_df_dict["Price"].loc["Niederlande"]
+    # Add "Price Change" (vs. base scenario)
+    if scenario_data[0] == "delta":
+        output_df_dict["Price Change"] = output_df_dict["Price"] / (scenario_price + output_df_dict["Price"]) * 100
+    # Add "Supply" ("Pipeline" + LNG imports)
     # Add "Pipeline" (Imports + transit imports)
     output_df_dict["Pipeline"] = output_df_dict["Supply Mix"].loc[pd.IndexSlice[:, ["Piped Imports", "Transit Imports"]], :].groupby(["Region"]).sum()
     # Add "Supply" ("Pipeline" + LNG imports)
@@ -294,24 +296,30 @@ for scenario, scenario_data in scenario_dict.items():
         ]
     ).sort_index(level = 0)
     output_df_dict["Supply"] = output_df_dict["Supply Mix"].loc[pd.IndexSlice[:, ["Piped Imports", "Transit Imports", "LNG Imports"]], :].groupby(["Region"]).sum()
-    # Add "Piped Share" ("Pipeline"/"Supply")
+    # Add "Piped Share" ("Pipeline"/"Supply") and "LNG Share" ("LNG"/"Supply")
     if scenario_data[0] == "scenario":
-        output_df_dict["Piped Share"] = output_df_dict["Pipeline"] / output_df_dict["Supply"] * 100
+        output_df_dict["Piped Share"] = (output_df_dict["Pipeline"] / output_df_dict["Supply"] * 100).round(decimals = 0)
+        output_df_dict["LNG Share"] = 100 - output_df_dict["Piped Share"]
     else:
         output_df_dict["Piped Share"] = ((scenario_pipeline + output_df_dict["Pipeline"]) / (scenario_supply + output_df_dict["Supply"]) - scenario_pipeline / scenario_supply) * 100
-    # Add "LNG Share" ("LNG"/"Supply")
-    output_df_dict["LNG Share"] = 100 - output_df_dict["Piped Share"]
-    output_df_dict["LNG Supply"] = output_df_dict["LNG Share"] * output_df_dict["Supply"] / 100
-        
+        output_df_dict["LNG Share"] = - output_df_dict["Piped Share"]
+    output_df_dict["LNG Supply"] = output_df_dict["Supply Mix"].xs("LNG Imports", level = 1, drop_level = True)
+    
     for metric, metric_params in output_metrics.items():
+        if scenario_data[0] not in metric_params.get("use_for", ["scenario", "delta"]):
+            continue
         # Parameters
         label_metric = metric_params.get("label_metric", None)
         colormap_metric = metric_params.get("colormap_metric", None)
         label_round_digits = metric_params.get("label_digits", None)
         colormap_digits = metric_params.get("colormap_digits", 0)
         colormap_percentage = "%%" if metric_params.get("colormap_percentage", False) else ""
+        label_pct = "%" if metric_params.get("label_pct", False) else ""
         zoom_creation = metric_params.get("zoom_creation", False)
-        
+        delta_signs = metric_params.get("delta_signs", False)
+        # Leading signs
+        leading_zero = "" if (scenario_data[0] == "scenario") or delta_signs else "+"
+    
         # Create folder if needed
         try:
             os.mkdir(OUTPUT_FOLDER / scenario_data[1] / scenario / "Markt" / metric)
@@ -358,6 +366,9 @@ for scenario, scenario_data in scenario_dict.items():
                     
         # Iterate over cycles
         for cycle in params_dict["Cycles"].index.values[1:]:
+            if (cycle not in ["Sommer", "Winter", "GY"]) and (output_seasons_only):
+                continue
+            
             # Plot each cycle - load base plot
             scenario_fig = pickle.load(open(TEMP_FOLDER / "base.pkl", "rb"))
             scenario_ax = scenario_fig.axes[0]
@@ -371,13 +382,13 @@ for scenario, scenario_data in scenario_dict.items():
             if isinstance(label_metric, str):
                 # Plot labels
                 for region_index, region in label_gdf.iterrows():
-                    if scenario_data[0] == "scenario":
-                        val = f"{region[cycle]: ,.{label_round_digits}f}".replace(",", ";").replace(".", ",").replace(";", ".")    
+                    if scenario_data[0] == "scenario" and not delta_signs:
+                        val = f"{region[cycle]: ,.{label_round_digits}f}".replace(",", ";").replace(".", ",").replace(";", ".") + label_pct
                     else:
                         if round(region[cycle], label_round_digits) > 0:
-                            val = "+" + str(format(region[cycle], f",.{label_round_digits}f")).replace(",", ";").replace(".", ",").replace(";", ".")
+                            val = "+" + str(format(region[cycle], f",.{label_round_digits}f")).replace(",", ";").replace(".", ",").replace(";", ".") + label_pct
                         elif round(region[cycle], label_round_digits) < 0:
-                            val = str(format(region[cycle], f",.{label_round_digits}f")).replace(",", ";").replace(".", ",").replace(";", ".")
+                            val = str(format(region[cycle], f",.{label_round_digits}f")).replace(",", ";").replace(".", ",").replace(";", ".") + label_pct
                         else:
                             val = ""
                     scenario_ax.annotate(
@@ -490,7 +501,7 @@ for scenario, scenario_data in scenario_dict.items():
                     # Only plot required values
                     if (scenario_data[0] == "scenario" and piped_import_flow[cycle] > metric_params["piped_imports"]) or (scenario_data[0] == "delta" and piped_import_flow[cycle] != 0):
                         label_loc = import_pipes_labels_gdf.loc[piped_import_flow_index[0] + "_full"]["points"][0]
-                        if scenario_data[0] == "scenario":
+                        if scenario_data[0] == "scenario" and not delta_signs:
                             val = f"{piped_import_flow[cycle]: ,.{metric_params.get('piped_imports_digits', 0)}f}".replace(",", ";").replace(".", ",").replace(";", ".")   
                         else:
                             if piped_import_flow[cycle] > 0:
@@ -515,7 +526,7 @@ for scenario, scenario_data in scenario_dict.items():
                         for zoom_country in zoom_list:
                             if piped_import_flow_index[2] == zoom_country and ((scenario_data[0] == "scenario" and piped_import_flow[cycle] > metric_params["piped_imports"]) or (scenario_data[0] == "delta" and piped_import_flow[cycle] != 0)):
                                 label_loc = import_pipes_labels_gdf.loc[piped_import_flow_index[0] + "_close"]["points"][0]
-                                if scenario_data[0] == "scenario":
+                                if scenario_data[0] == "scenario" and not delta_signs:
                                     val = f"{piped_import_flow[cycle]: ,.{metric_params.get('piped_imports_digits', 0)}f}".replace(",", ";").replace(".", ",").replace(";", ".")   
                                 else:
                                     if piped_import_flow[cycle] > 0:
@@ -537,7 +548,7 @@ for scenario, scenario_data in scenario_dict.items():
                                 )
                 # Also total flow labels where defined
                 for total_flow_index, total_flow in output_df_dict["Piped_import_cons_start"].iterrows():
-                    if scenario_data[0] == "scenario":
+                    if scenario_data[0] == "scenario" and not delta_signs:
                         val = f"{total_flow[cycle]: ,.{metric_params.get('piped_imports_digits', 0)}f}".replace(",", ";").replace(".", ",").replace(";", ".")   
                     else:
                         if total_flow[cycle] > 0:
@@ -596,7 +607,7 @@ for scenario, scenario_data in scenario_dict.items():
                             else:
                                 arrow_dir = "rarrow"
                         arrow_dir += ", pad = 0.1"
-                        if scenario_data[0] == "scenario":
+                        if scenario_data[0] == "scenario" and not delta_signs:
                             val = f"{abs(connection_flow['Flow']): ,.{metric_params.get('transit_digits', 0)}f}"   
                         else:
                             if connection_flow[cycle] > 0:
@@ -628,7 +639,7 @@ for scenario, scenario_data in scenario_dict.items():
                                         )
                                 ].iloc[0]
                                 if marker["Origin"] == zoom_country or marker["Destination"] == zoom_country:
-                                    if scenario_data[0] == "scenario":
+                                    if scenario_data[0] == "scenario" and not delta_signs:
                                         val = f"{abs(connection_flow['Flow']): ,.{metric_params.get('transit_digits', 0)}f}"   
                                     else:
                                         if connection_flow[cycle] > 0:
@@ -656,7 +667,7 @@ for scenario, scenario_data in scenario_dict.items():
                 for lng_connection_flow_index, lng_connection_flow in output_df_dict["LNG_cons"].iterrows():
                     # Only plot required values
                     if (scenario_data[0] == "scenario" and lng_connection_flow[cycle] > metric_params["lng_imports"]) or (scenario_data[0] == "delta" and lng_connection_flow[cycle] != 0):
-                        if scenario_data[0] == "scenario":
+                        if scenario_data[0] == "scenario" and not delta_signs:
                             val = f"{lng_connection_flow[cycle]: ,.{metric_params.get('lng_imports_digits', 0)}f}".replace(",", ";").replace(".", ",").replace(";", ".")
                         else:
                             if lng_connection_flow[cycle] > 0:
@@ -682,7 +693,7 @@ for scenario, scenario_data in scenario_dict.items():
                     if zoom_creation:
                         for zoom_country in zoom_list:
                             if lng_connection_flow_index == zoom_country and ((scenario_data[0] == "scenario" and lng_connection_flow[cycle] > metric_params["lng_imports"]) or (scenario_data[0] == "delta" and lng_connection_flow[cycle] != 0)):
-                                if scenario_data[0] == "scenario":
+                                if scenario_data[0] == "scenario" and not delta_signs:
                                     val = f"{lng_connection_flow[cycle]: ,.{metric_params.get('lng_imports_digits', 0)}f}".replace(",", ";").replace(".", ",").replace(";", ".")   
                                 else:
                                     if lng_connection_flow[cycle] > 0:
@@ -711,7 +722,7 @@ for scenario, scenario_data in scenario_dict.items():
                 for export_flow_index, export_flow in output_df_dict["Piped Exports"].iterrows():
                     # Only plot required values
                     if (scenario_data[0] == "scenario" and export_flow[cycle] < metric_params["piped_exports"]) or (scenario_data[0] == "delta" and export_flow[cycle] != 0):
-                        if scenario_data[0] == "scenario":
+                        if scenario_data[0] == "scenario" and not delta_signs:
                             val = f"{abs(export_flow[cycle]): ,.{metric_params.get('piped_exports_digits', 0)}f}".replace(",", ";").replace(".", ",").replace(";", ".")
                         else:
                             if export_flow[cycle] > 0:
@@ -735,7 +746,7 @@ for scenario, scenario_data in scenario_dict.items():
                     if zoom_creation:
                         for zoom_country in zoom_list:
                             if export_flow_index[2] == zoom_country and ((scenario_data[0] == "scenario" and export_flow[cycle] < metric_params["piped_exports"]) or (scenario_data[0] == "delta" and export_flow[cycle] != 0)):
-                                if scenario_data[0] == "scenario":
+                                if scenario_data[0] == "scenario" and not delta_signs:
                                     val = f"{abs(export_flow[cycle]): ,.{metric_params.get('piped_exports_digits', 0)}f}".replace(",", ";").replace(".", ",").replace(";", ".")   
                                 else:
                                     if export_flow[cycle] > 0:
@@ -759,35 +770,34 @@ for scenario, scenario_data in scenario_dict.items():
             
             scenario_fig.canvas.draw()
 
-            if scenario_data[0] == "delta":
-                # Massage data and save file
-                data = np.fromstring(scenario_fig.canvas.tostring_rgb(), dtype=np.uint8, sep="")
-                data = data.reshape(scenario_fig.canvas.get_width_height()[::-1] + (3,))[30 * resolution_level:-30 * resolution_level, 30 * resolution_level:-30 * resolution_level, :]
-                h, w = data.shape[:2]
-                RGBA = np.dstack((data, np.zeros((h, w), dtype = np.uint8) + 255))
-                mWhite = (RGBA[:, :, 0:3] == [255, 255, 255]).all(2)
-                RGBA[mWhite] = (255, 255, 255, 0)
-                img = Image.fromarray(RGBA)
-                img.save(OUTPUT_FOLDER / scenario_data[1] / scenario / "Markt" / metric / f"Markt_{scenario}_{metric}_{cycle}.png", "PNG")
-                
-                if zoom_creation:
-                    for zoom_country in zoom_list:
-                        fig_range = zoom_dict[zoom_country]["fig"].canvas.get_width_height()
-                        aspect_ratio = fig_range[1] / fig_range[0]
-                        zoom_dict[zoom_country]["fig"].canvas.draw()
-                        data = np.fromstring(zoom_dict[zoom_country]["fig"].canvas.tostring_rgb(), dtype=np.uint8, sep="")
-                        data = data.reshape(zoom_dict[zoom_country]["fig"].canvas.get_width_height()[::-1] + (3,))[int(30 * aspect_ratio * resolution_level):-int(30 * aspect_ratio * resolution_level), int(20 / aspect_ratio * resolution_level):-int(55 / aspect_ratio * resolution_level), :]
-                        h, w = data.shape[:2]
-                        RGBA = np.dstack((data, np.zeros((h, w), dtype = np.uint8) + 255))
-                        mWhite = (RGBA[:, :, 0:3] == [255, 255, 255]).all(2)
-                        RGBA[mWhite] = (255, 255, 255, 0)
-                        img = Image.fromarray(RGBA)
-                        img.save(OUTPUT_FOLDER / scenario_data[1] / scenario / zoom_country / metric / f"{zoom_country}_{scenario}_{metric}_{cycle}.png", "PNG")
-                                
+            # Massage data and save file
+            data = np.fromstring(scenario_fig.canvas.tostring_rgb(), dtype=np.uint8, sep="")
+            data = data.reshape(scenario_fig.canvas.get_width_height()[::-1] + (3,))[30 * resolution_level:-30 * resolution_level, 30 * resolution_level:-30 * resolution_level, :]
+            h, w = data.shape[:2]
+            RGBA = np.dstack((data, np.zeros((h, w), dtype = np.uint8) + 255))
+            mWhite = (RGBA[:, :, 0:3] == [255, 255, 255]).all(2)
+            RGBA[mWhite] = (255, 255, 255, 0)
+            img = Image.fromarray(RGBA)
+            img.save(OUTPUT_FOLDER / scenario_data[1] / scenario / "Markt" / metric / f"Markt_{scenario}_{metric}_{cycle}.png", "PNG")
+            
+            if zoom_creation:
+                for zoom_country in zoom_list:
+                    fig_range = zoom_dict[zoom_country]["fig"].canvas.get_width_height()
+                    aspect_ratio = fig_range[1] / fig_range[0]
+                    zoom_dict[zoom_country]["fig"].canvas.draw()
+                    data = np.fromstring(zoom_dict[zoom_country]["fig"].canvas.tostring_rgb(), dtype=np.uint8, sep="")
+                    data = data.reshape(zoom_dict[zoom_country]["fig"].canvas.get_width_height()[::-1] + (3,))[int(30 * aspect_ratio * resolution_level):-int(30 * aspect_ratio * resolution_level), int(20 / aspect_ratio * resolution_level):-int(55 / aspect_ratio * resolution_level), :]
+                    h, w = data.shape[:2]
+                    RGBA = np.dstack((data, np.zeros((h, w), dtype = np.uint8) + 255))
+                    mWhite = (RGBA[:, :, 0:3] == [255, 255, 255]).all(2)
+                    RGBA[mWhite] = (255, 255, 255, 0)
+                    img = Image.fromarray(RGBA)
+                    img.save(OUTPUT_FOLDER / scenario_data[1] / scenario / zoom_country / metric / f"{zoom_country}_{scenario}_{metric}_{cycle}.png", "PNG")
+                            
             plt.close()
             
     # Save scenario data
     if scenario_data[0] == "scenario":
         scenario_pipeline = output_df_dict["Pipeline"]
-        scenario_supply = output_df_dict["Supply"]        
-        
+        scenario_supply = output_df_dict["Supply"]   
+        scenario_price = output_df_dict["Price"]

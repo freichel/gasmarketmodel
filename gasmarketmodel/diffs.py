@@ -9,7 +9,7 @@ import shutil
 import openpyxl
 
 # Find all scenarios
-scenarios = [scenario for scenario in os.listdir(OUTPUT_FOLDER / "scenarios") if os.path.isdir(os.path.join(OUTPUT_FOLDER / "scenarios", scenario)) and os.path.isfile(OUTPUT_FOLDER / "scenarios" /  scenario / "output.xlsx")]
+scenarios = [scenario for scenario in os.listdir(OUTPUT_FOLDER / "scenarios") if os.path.isdir(os.path.join(OUTPUT_FOLDER / "scenarios", scenario)) and os.path.isfile(OUTPUT_FOLDER / "scenarios" /  scenario / f"output_{scenario}.xlsx")]
 
 # Initialise empty dictionary
 scenario_dict = {}
@@ -23,7 +23,7 @@ for scenario_index, scenario in enumerate(scenarios):
     # Read in data from each sheet
     for output_metric, output_params in output_dict.items():
         scenario_dict[scenario][output_metric] = pd.read_excel(
-            io = OUTPUT_FOLDER / "scenarios" /  scenario / "output.xlsx",
+            io = OUTPUT_FOLDER / "scenarios" /  scenario / f"output_{scenario}.xlsx",
             sheet_name = output_metric,
             skiprows = 4 + output_params[1],
             index_col = output_params[2]
@@ -31,7 +31,7 @@ for scenario_index, scenario in enumerate(scenarios):
         
     # Read in total prices
     scenario_price_dict[scenario] = {}
-    wb = openpyxl.load_workbook(OUTPUT_FOLDER / "scenarios" /  scenario / "output.xlsx")
+    wb = openpyxl.load_workbook(OUTPUT_FOLDER / "scenarios" /  scenario / f"output_{scenario}.xlsx")
     ws = wb["Charting"]
     for col in range(4, 16):
         scenario_price_dict[scenario][ws.cell(row = 1, column = col).value] = scenario_dict[scenario]["Cost"].iloc[-1, col-2] / scenario_dict[scenario]["Demand"].iloc[-1, col-2] / int(ws.cell(row = 2, column = col).value) * 1000
@@ -54,7 +54,7 @@ try:
     os.mkdir(OUTPUT_FOLDER / "deltas" / f"Delta_{alt_scenario}_{base_scenario}")
 except FileExistsError:
     pass
-output_file = OUTPUT_FOLDER / "deltas" / f"Delta_{alt_scenario}_{base_scenario}" / "output.xlsx"
+output_file = OUTPUT_FOLDER / "deltas" / f"Delta_{alt_scenario}_{base_scenario}" / f"output_Delta_{alt_scenario}_{base_scenario}.xlsx"
 # Copy template
 shutil.copyfile(OUTPUT_TEMPLATE_FILE, output_file)
 # Excel Writer

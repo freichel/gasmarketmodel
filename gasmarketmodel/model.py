@@ -2,7 +2,7 @@
 Main module to create scenario outputs
 '''
 
-from params import SCENARIO_FOLDER, OUTPUT_FOLDER, OUTPUT_TEMPLATE_FILE, seasons_df, seasons_dict
+from params import SCENARIO_FOLDER, OUTPUT_FOLDER, OUTPUT_TEMPLATE_FILE, seasons_df, seasons_dict, ukraine_min_flow, ukraine_pipes, ukraine_storage_export_pct
 import excelimport as ei
 import os
 import pandas as pd
@@ -383,7 +383,38 @@ for scenario_file in scenario_file_list:
             )
             # Add constraints so that the sum of flows will match demand
             cost_total += (exporter_demand <= piped_exporters_demand_df.loc[piped_exporter_index][cycle])
-            cost_total += exporter_demand >= (piped_exporters_demand_df.loc[piped_exporter_index][cycle])
+            cost_total += (exporter_demand >= piped_exporters_demand_df.loc[piped_exporter_index][cycle])
+        
+        # Ukraine transit exports
+        # Storage export flows
+        ukraine_storage_export = max(storage_volumes_df.loc["Ukraine"][cycle], 0) * ukraine_storage_export_pct
+        # Find Russian pipes
+        ukraine_russia_pipes = [var for var in cost_total.variables() if var.name in ukraine_pipes.keys()]
+        # Find Ukraine export transit pipes and ensure max capacity is spread over both Russian and transit pipes
+        # Also add up min capacities
+        min_russia_cap = 0
+        min_transit_cap = 0
+        for russia_pipe, export_pipes in ukraine_pipes.items():
+            min_region_cap = 0
+            # Find transit pipes
+            ukraine_transit_pipes = [var for var in cost_total.variables() if var.name in export_pipes]
+            # Find max capacity
+            max_cap = piped_importers_connections_data_df.loc[russia_pipe, "Capacity - Max"][cycle]
+            # Find min capacities
+            # Russian pipe
+            min_region_cap += piped_importers_connections_data_df.loc[russia_pipe, "Capacity - Min"][cycle]
+            min_russia_cap += piped_importers_connections_data_df.loc[russia_pipe, "Capacity - Min"][cycle]
+            # Transit pipes
+            min_region_cap += sum([connections_data_df.loc[pipe.name, "Capacity - Min"][cycle] for pipe in ukraine_transit_pipes])
+            min_transit_cap += sum([connections_data_df.loc[pipe.name, "Capacity - Min"][cycle] for pipe in ukraine_transit_pipes])
+            # Assign max capacity to sum of Russian and transit pipes for each border
+            # Assign max capacity to sum of Russian and transit pipes for each border
+            cost_total += (pulp.lpSum(ukraine_transit_pipes) + [var for var in ukraine_russia_pipes if var.name == russia_pipe][0] <= max_cap - min_region_cap)
+        # Assign total min flow through Russian pipes
+        cost_total += (pulp.lpSum(ukraine_russia_pipes) >= ukraine_min_flow - min_russia_cap)
+        # Assign storage flows
+        cost_total += (pulp.lpSum([var for var in cost_total.variables() if var.name in [pipe for pipes in ukraine_pipes.values() for pipe in pipes]]) >= ukraine_storage_export - min_transit_cap)
+                
         # LNG
         # LNG price curve
         lng_pricelist = lng_supply_curve_df[cycle].to_frame().reset_index().values
@@ -442,6 +473,7 @@ for scenario_file in scenario_file_list:
         # Solve and find cheapest solution
         cycle_solution = [None, None]
         for idx, lng_price in enumerate(cost_total_dict.keys()):
+            print(f"     Running price {idx+1} of {len(cost_total_dict)}", end = "\r")
             # Solve
             res = cost_total_dict[lng_price].solve(pulp.PULP_CBC_CMD(msg = 0, timeLimit = 20, gapRel = 0.1))
             # Check if a solution was found
@@ -753,7 +785,7 @@ for scenario_file in scenario_file_list:
         os.mkdir(OUTPUT_FOLDER / "scenarios" / scenario)
     except FileExistsError:
         pass
-    output_file = OUTPUT_FOLDER / "scenarios" / scenario / "output.xlsx"
+    output_file = OUTPUT_FOLDER / "scenarios" / scenario / f"output_{scenario}.xlsx"
     # Copy template
     shutil.copyfile(OUTPUT_TEMPLATE_FILE, output_file)
     # Excel Writer
