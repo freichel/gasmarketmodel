@@ -10,6 +10,7 @@ import pulp
 import numpy as np
 import shutil
 import openpyxl
+from pprint import pprint
 
 # Find all scenario files
 print("Finding scenarios...")
@@ -532,6 +533,10 @@ for scenario_file in scenario_file_list:
         # Continuous iteration until all solutions are found
         # Start with LNG
         regions_prices_dict["LNG"] = lng_price
+        # Manual override...
+        regions_sources_dict["Deutschland"].append(["Niederlande", 0.0])
+        regions_sources_dict["Österreich"].append(["Deutschland", 0.544520547945205])
+        regions_sources_dict["Italien"] = [["Österreich", 0.575506563926941]]
         # Keep looping until all values have been found
         stuck = 0
         while None in regions_prices_dict.values():
@@ -576,7 +581,7 @@ for scenario_file in scenario_file_list:
                 # Iterate over remaining regions
                 for region_key, region_prices in regions_sources_dict.items():
                     # Find first instance of an unresolved price
-                    if len(region_prices) > 1:
+                    if len(region_prices) > 1 and sum([1 if isinstance(item, float) else 0 for item in region_prices]) > 0:
                         for region_price_index, region_price in enumerate(region_prices):
                             if isinstance(region_price, list):
                                 # Delete it

@@ -354,21 +354,33 @@ for scenario, scenario_data in scenario_dict.items():
                 left_index = True,
                 right_index = True
             )
-            cmap_max = colormap_gdf[["Sommer", "Winter"]].to_numpy().max()
-            cmap_min = colormap_gdf[["Sommer", "Winter"]].to_numpy().min()
-            # Center around zero if we're using a price map
-            if (metric_params.get("colormap", formatting_dict["cmap_main"]) == formatting_dict["cmap_price"] and scenario_data[0] == "delta"):
-                while abs(cmap_max) != abs(cmap_min):
-                    if abs(cmap_max) > abs(cmap_min):
-                        cmap_min = - cmap_max
-                    else:
-                        cmap_max = - cmap_min
+            if metric_params.get("season_delta", True):
+                cmap_max = colormap_gdf[["Sommer", "Winter"]].to_numpy().max()
+                cmap_min = colormap_gdf[["Sommer", "Winter"]].to_numpy().min()
+                # Center around zero if we're using a price map
+                if (metric_params.get("colormap", formatting_dict["cmap_main"]) in [formatting_dict["cmap_price"], formatting_dict["cmap_pricedelta_3"]]  and scenario_data[0] == "delta"):
+                    while abs(cmap_max) != abs(cmap_min):
+                        if abs(cmap_max) > abs(cmap_min):
+                            cmap_min = - cmap_max
+                        else:
+                            cmap_max = - cmap_min
                     
         # Iterate over cycles
         for cycle in params_dict["Cycles"].index.values[1:]:
             if (cycle not in ["Sommer", "Winter", "GY"]) and (output_seasons_only):
                 continue
             
+            if not metric_params.get("season_delta", False):
+                cmap_max = colormap_gdf[cycle].to_numpy().max()
+                cmap_min = colormap_gdf[cycle].to_numpy().min()
+                # Center around zero if we're using a price map
+                if (metric_params.get("colormap", formatting_dict["cmap_main"]) == formatting_dict["cmap_price"] and scenario_data[0] == "delta") or (metric_params.get("colormap", formatting_dict["cmap_main"]) == formatting_dict["cmap_pricedelta_3"]):
+                    while abs(cmap_max) != abs(cmap_min):
+                        if abs(cmap_max) > abs(cmap_min):
+                            cmap_min = - cmap_max
+                        else:
+                            cmap_max = - cmap_min
+                
             # Plot each cycle - load base plot
             scenario_fig = pickle.load(open(TEMP_FOLDER / "base.pkl", "rb"))
             scenario_ax = scenario_fig.axes[0]
@@ -555,7 +567,7 @@ for scenario, scenario_data in scenario_dict.items():
                             val = "+" + str(format(total_flow[cycle], f",.{metric_params.get('piped_imports_digits', 0)}f")).replace(",", ";").replace(".", ",").replace(";", ".")
                         else:
                             val = str(format(total_flow[cycle], f",.{metric_params.get('piped_imports_digits', 0)}f")).replace(",", ";").replace(".", ",").replace(";", ".")
-                    if len(val) > 0:
+                    if len(val) > 0 and float(val) != 0:
                         scenario_ax.text(
                             x = total_flow_index[0],
                             y = total_flow_index[1],

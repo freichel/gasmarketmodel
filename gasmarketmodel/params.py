@@ -113,7 +113,9 @@ formatting_dict = {
     "export_label_fontsize" : 10 * resolution_level,
     "cmap_main" : matplotlib.colors.LinearSegmentedColormap.from_list("", [color_dict[1], color_dict[3], color_dict[2]]),
     "cmap_price" : matplotlib.colors.LinearSegmentedColormap.from_list("", [color_dict[10], "white", color_dict[9]]),
-    "cmap_pricedelta" : matplotlib.colors.LinearSegmentedColormap.from_list("", [color_dict[10], "white"]),
+    "cmap_pricedelta_3" : matplotlib.colors.LinearSegmentedColormap.from_list("", [color_dict[2], "white", color_dict[8]]),
+    "cmap_pricedelta_2" : matplotlib.colors.LinearSegmentedColormap.from_list("", [color_dict[10], "white"]),
+    "cmap_pricedelta_1" : matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", color_dict[2]]),
     "connection_arrow_col" : color_dict[7],
     "connection_arrow_alpha" : 1,
     "lng_connection_arrow_col" : color_dict[12],
@@ -136,7 +138,17 @@ output_metrics = {
         "colormap_metric" : "Price Delta",
         "colormap_digits" : 1,
         "colorscale_orientation" : "vertical",
-        "colormap" : formatting_dict["cmap_pricedelta"],
+        "colormap" : formatting_dict["cmap_pricedelta_3"],
+        "use_for" : ["scenario"],
+        "delta_signs" : True
+    },
+    "Preis" : {
+        "label_metric" : "Price",
+        "label_digits" : 1,
+        "colormap_metric" : "Price",
+        "colormap_digits" : 1,
+        "colorscale_orientation" : "vertical",
+        "colormap" : formatting_dict["cmap_pricedelta_1"],
         "use_for" : ["scenario"],
         "delta_signs" : True
     },
@@ -146,7 +158,7 @@ output_metrics = {
         "colormap_metric" : "Price Change",
         "colormap_digits" : 1,
         "colorscale_orientation" : "vertical",
-        "colormap" : formatting_dict["cmap_pricedelta"],
+        "colormap" : formatting_dict["cmap_pricedelta_2"],
         "colormap_percentage" : True,
         "label_pct" : True,
         "use_for" : ["delta"]
@@ -160,7 +172,8 @@ output_metrics = {
         "colormap_percentage" : True,
         "colorscale_orientation" : "vertical",
         "lng_imports" : 0,
-        "lng_imports_digits" : 0
+        "lng_imports_digits" : 0,
+        "season_delta" : True
     },
     "Supply - Pipe" : {
         "label_metric" : "Pipeline",
@@ -176,14 +189,16 @@ output_metrics = {
         "piped_exports_digits" : 0,
         "aggregate_transit" : True,
         "transits" : 0,
-        "transits_digits" : 0
+        "transits_digits" : 0,
+        "season_delta" : True
     },
     "Demand" : {
         "label_metric" : "Demand",
         "label_digits" : 0,
         "colormap_metric" : "Demand",
         "colormap_digits" : 0,
-        "colorscale_orientation" : "vertical"
+        "colorscale_orientation" : "vertical",
+        "season_delta" : True
     }
 }
 
