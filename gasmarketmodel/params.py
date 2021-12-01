@@ -244,7 +244,7 @@ output_dict = {
 
 # Ukraine flows
 ukraine_min_flow = 987.394
-ukraine_storage_export_pct = 0.6
+ukraine_storage_export_pct = 0.5
 ukraine_pipes = {
     "PL_Ukr_RU_Pipe" : ["PL_Ukr_Pipe"],
     "RO_Ukr_RU_Pipe" : ["RO_Ukr_Pipe", "RO_Ukr_TBP_Pipe"],
