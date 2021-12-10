@@ -41,8 +41,8 @@ for scenario_index, scenario in enumerate(scenarios):
     
 # Subtract scenarios
 #TODO - make list
-base_scenario = "NS2"
-alt_scenario = "NS2-Ukr"
+base_scenario = "No NS2"
+alt_scenario = "NS2-elast-final"
 
 # Initialise empty difference df dict
 diff_df_dict = {}

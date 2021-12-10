@@ -284,7 +284,7 @@ for scenario, scenario_data in scenario_dict.items():
     output_df_dict["Price Delta"] = output_df_dict["Price"] - output_df_dict["Price"].loc["Niederlande"]
     # Add "Price Change" (vs. base scenario)
     if scenario_data[0] == "delta":
-        output_df_dict["Price Change"] = output_df_dict["Price"] / (scenario_price + output_df_dict["Price"]) * 100
+        output_df_dict["Price Change"] = ((scenario_price + output_df_dict["Price"]) / scenario_price - 1) * 100
     # Add "Supply" ("Pipeline" + LNG imports)
     # Add "Pipeline" (Imports + transit imports)
     output_df_dict["Pipeline"] = output_df_dict["Supply Mix"].loc[pd.IndexSlice[:, ["Piped Imports", "Transit Imports"]], :].groupby(["Region"]).sum()
@@ -367,7 +367,7 @@ for scenario, scenario_data in scenario_dict.items():
                     
         # Iterate over cycles
         for cycle in params_dict["Cycles"].index.values[1:]:
-            if (cycle not in ["Sommer", "Winter", "GY"]) and (output_seasons_only):
+            if (cycle not in ["GY"]) and (output_seasons_only):
                 continue
             
             if not metric_params.get("season_delta", False):
@@ -792,7 +792,7 @@ for scenario, scenario_data in scenario_dict.items():
             img = Image.fromarray(RGBA)
             img.save(OUTPUT_FOLDER / scenario_data[1] / scenario / "Markt" / metric / f"Markt_{scenario}_{metric}_{cycle}.png", "PNG")
             
-            if zoom_creation:
+            if (zoom_creation) and (scenario_data[0] == "delta"):
                 for zoom_country in zoom_list:
                     fig_range = zoom_dict[zoom_country]["fig"].canvas.get_width_height()
                     aspect_ratio = fig_range[1] / fig_range[0]

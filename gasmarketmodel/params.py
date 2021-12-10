@@ -132,7 +132,20 @@ formatting_dict = {
 
 # Output metrics
 output_metrics = {
-    "Preisdelta zu TTF" : {
+    "Preisdelta zu TTF_abs" : {
+        "label_metric" : "Price Delta",
+        "label_digits" : 1,
+        "colormap_metric" : "Price Delta",
+        "colormap_digits" : 0,
+        "colorscale_orientation" : "vertical",
+        "colormap" : formatting_dict["cmap_pricedelta_3"],
+        "use_for" : ["scenario"],
+        "delta_signs" : True
+    }   
+}
+
+'''
+"Preisdelta zu TTF" : {
         "label_metric" : "Price Delta",
         "label_digits" : 1,
         "colormap_metric" : "Price Delta",
@@ -150,7 +163,7 @@ output_metrics = {
         "colorscale_orientation" : "vertical",
         "colormap" : formatting_dict["cmap_pricedelta_1"],
         "use_for" : ["scenario"],
-        "delta_signs" : True
+        "delta_signs" : False
     },
     "Preisdifferenz prozentual" : {
         "label_metric" : "Price Change",
@@ -200,10 +213,6 @@ output_metrics = {
         "colorscale_orientation" : "vertical",
         "season_delta" : True
     }
-}
-
-'''
-
 "Alles" : {
         "label_metric" : "Demand",
         "label_digits" : 0,
