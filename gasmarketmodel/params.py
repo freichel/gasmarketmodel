@@ -132,7 +132,30 @@ formatting_dict = {
 
 # Output metrics
 output_metrics = {
-    "Preisdelta zu TTF_abs" : {
+    "Alles" : {
+        "label_metric" : "Demand",
+        "label_digits" : 0,
+        "label_color" : "white",
+        "colormap_metric" : "LNG Share",
+        "colormap_digits" : 0,
+        "colormap_percentage" : True,
+        "colorscale_orientation" : "horizontal",
+        "colormap" : formatting_dict["cmap_price"],
+        "piped_imports" : 0,
+        "piped_imports_digits" : 0,
+        "piped_exports" : 0,
+        "piped_exports_digits" : 0,
+        "lng_imports" : 0,
+        "lng_imports_digits" : 0,
+        "aggregate_transit" : True,
+        "transits" : 0,
+        "transits_digits" : 0,
+        "zoom_creation" : True
+    }
+}
+
+'''
+"Preisdelta zu TTF_abs" : {
         "label_metric" : "Price Delta",
         "label_digits" : 1,
         "colormap_metric" : "Price Delta",
@@ -142,9 +165,6 @@ output_metrics = {
         "use_for" : ["scenario"],
         "delta_signs" : True
     }   
-}
-
-'''
 "Preisdelta zu TTF" : {
         "label_metric" : "Price Delta",
         "label_digits" : 1,

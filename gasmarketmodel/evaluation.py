@@ -367,7 +367,7 @@ for scenario, scenario_data in scenario_dict.items():
                     
         # Iterate over cycles
         for cycle in params_dict["Cycles"].index.values[1:]:
-            if (cycle not in ["GY"]) and (output_seasons_only):
+            if (cycle not in ["Winter", "Sommer", "GY"]) and (output_seasons_only):
                 continue
             
             if not metric_params.get("season_delta", False):
@@ -792,7 +792,7 @@ for scenario, scenario_data in scenario_dict.items():
             img = Image.fromarray(RGBA)
             img.save(OUTPUT_FOLDER / scenario_data[1] / scenario / "Markt" / metric / f"Markt_{scenario}_{metric}_{cycle}.png", "PNG")
             
-            if (zoom_creation) and (scenario_data[0] == "delta"):
+            if (zoom_creation) and ("delta" in scenario_data[0]):
                 for zoom_country in zoom_list:
                     fig_range = zoom_dict[zoom_country]["fig"].canvas.get_width_height()
                     aspect_ratio = fig_range[1] / fig_range[0]
